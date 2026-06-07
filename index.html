@@ -509,45 +509,64 @@
     body.intro-active { overflow: hidden !important; }
     #intro-overlay {
       position: fixed; inset: 0; z-index: 99999; background: #000;
-      display: flex; align-items: center; justify-content: center; flex-direction: column;
-      overflow: hidden; transition: opacity 1.5s cubic-bezier(.77,0,.18,1);
+      overflow: hidden;
+      transition: transform 1.5s cubic-bezier(.85,0,.15,1);
+      will-change: transform;
     }
-    #intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+    #intro-overlay.dissolving { transform: translateY(-100%); pointer-events: none; }
     #intro-overlay.gone { display: none; }
-    #intro-canvas { position: absolute; inset: 0; }
+    #intro-canvas { position: absolute; inset: 0; z-index: 0; }
     .intro-scan {
       position: absolute; inset: 0; z-index: 1; pointer-events: none;
       background: repeating-linear-gradient(0deg, transparent 0px, transparent 1px, rgba(0,0,0,.045) 1px, rgba(0,0,0,.045) 2px);
     }
-    .intro-inner { position: relative; z-index: 2; text-align: center; }
+    #globe-canvas {
+      position: absolute; bottom: -22%; left: 50%;
+      transform: translateX(-50%);
+      width: min(96vw, 820px); height: min(96vw, 820px);
+      z-index: 2; cursor: grab;
+    }
+    #globe-canvas:active { cursor: grabbing; }
+    .intro-wipe {
+      position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; z-index: 10; pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(255,215,0,.4) 20%, var(--gold-b) 50%, rgba(255,215,0,.4) 80%, transparent);
+      box-shadow: 0 0 30px rgba(255,215,0,.8), 0 0 70px rgba(255,215,0,.4);
+      opacity: 0; transition: opacity .25s;
+    }
+    #intro-overlay.dissolving .intro-wipe { opacity: 1; }
+    .intro-content {
+      position: absolute; top: clamp(32px, 7vh, 72px);
+      left: 50%; transform: translateX(-50%);
+      z-index: 4; text-align: center; width: 92%;
+    }
     .intro-eyebrow {
       font-size: .6rem; letter-spacing: .55em; text-transform: uppercase;
-      color: rgba(255,215,0,.25); margin-bottom: 22px;
+      color: rgba(255,215,0,.25); margin-bottom: 20px;
       animation: fadeUp .9s .3s ease both;
     }
     .intro-title-text {
-      font-family: var(--fd); font-size: clamp(4.8rem, 17vw, 17rem);
+      font-family: var(--fd); font-size: clamp(3.8rem, 13vw, 13rem);
       letter-spacing: .06em; line-height: 1; display: block;
       background: linear-gradient(135deg, #fff8e1 0%, var(--gold-b) 28%, #fff 52%, var(--gold-b) 76%, var(--gold) 100%);
       background-size: 350% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       animation: introTitleIn 1.4s cubic-bezier(.16,1,.3,1) .15s both, introShimmerGold 2.8s linear infinite;
-      filter: drop-shadow(0 0 70px rgba(255,215,0,.5)) drop-shadow(0 0 150px rgba(255,215,0,.18));
+      filter: drop-shadow(0 0 60px rgba(255,215,0,.5)) drop-shadow(0 0 130px rgba(255,215,0,.18));
     }
     @keyframes introTitleIn {
-      from { transform: translateY(70px) scale(.9); opacity: 0; }
+      from { transform: translateY(60px) scale(.9); opacity: 0; }
       to   { transform: none; opacity: 1; }
     }
     @keyframes introShimmerGold { to { background-position: -350% center; } }
     .intro-tagline {
-      font-size: .62rem; letter-spacing: .5em; text-transform: uppercase;
-      color: rgba(255,215,0,.16); margin-top: 16px;
+      font-size: .6rem; letter-spacing: .5em; text-transform: uppercase;
+      color: rgba(255,215,0,.16); margin-top: 14px;
       animation: fadeUp .9s .9s ease both;
     }
     .intro-scroll {
-      position: absolute; bottom: 44px; left: 50%; transform: translateX(-50%);
-      z-index: 2; text-align: center; animation: fadeUp .9s 1.6s ease both;
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 5; text-align: center; animation: fadeUp .9s 1.6s ease both; cursor: pointer;
     }
-    .intro-scroll span { display: block; font-size: .56rem; letter-spacing: .4em; text-transform: uppercase; color: rgba(255,215,0,.16); margin-bottom: 8px; }
+    .intro-scroll span { display: block; font-size: .52rem; letter-spacing: .38em; text-transform: uppercase; color: rgba(255,215,0,.16); margin-bottom: 8px; }
     .intro-scroll svg { display: block; margin: 0 auto; animation: introBounce 2.2s ease infinite; }
     @keyframes introBounce { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(8px); } }
 
@@ -582,13 +601,15 @@
 <div id="intro-overlay">
   <canvas id="intro-canvas"></canvas>
   <div class="intro-scan"></div>
-  <div class="intro-inner">
+  <div class="intro-content">
     <div class="intro-eyebrow">Trading &nbsp;·&nbsp; Education &nbsp;·&nbsp; Freedom</div>
     <span class="intro-title-text">KEOTRADEZ</span>
     <div class="intro-tagline">Discipline &nbsp;·&nbsp; System &nbsp;·&nbsp; Results</div>
   </div>
+  <canvas id="globe-canvas"></canvas>
+  <div class="intro-wipe"></div>
   <div class="intro-scroll">
-    <span>Scroll to enter</span>
+    <span>Drag globe &nbsp;·&nbsp; Scroll to enter</span>
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,215,0,.18)" stroke-width="1.5"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
 </div>
@@ -1285,7 +1306,7 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.querySelectorAll('[style*="animation"]').forEach(el => el.style.animation = 'none');
 }
 
-/* ── INTRO SCREEN ── */
+/* ── INTRO PARTICLES ── */
 (function(){
   var ov = document.getElementById('intro-overlay');
   var cv = document.getElementById('intro-canvas');
@@ -1300,97 +1321,144 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   });
 
   var floaters = [];
-  for(var i = 0; i < 240; i++){
+  for(var i = 0; i < 200; i++){
     floaters.push({
       x: Math.random()*W, y: Math.random()*H,
-      vx: (Math.random()-.5)*.48, vy: (Math.random()-.5)*.48,
-      r: Math.random()*1.9+.3,
-      a: Math.random()*.22+.04,
+      vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4,
+      r: Math.random()*1.6+.3,
+      a: Math.random()*.18+.04,
       gold: Math.random()>.45
     });
   }
 
-  var orbs = [];
-  [[210,.0013],[320,.0009],[440,.0007]].forEach(function(cfg, ri){
-    var n = 18 + ri*14;
-    for(var j = 0; j < n; j++){
-      orbs.push({
-        ang: (j/n)*Math.PI*2 + ri*.9,
-        rad: cfg[0] + (Math.random()*44-22),
-        spd: cfg[1]*(ri%2===0?1:-1)*(Math.random()*.5+.75),
-        r: Math.random()*1.5+.4,
-        a: Math.random()*.42+.1,
-        ry: .28+Math.random()*.18
-      });
-    }
-  });
-
-  var dying = false, deathProg = 0, raf;
+  var dying = false, raf;
 
   function frame(){
     ctx.clearRect(0,0,W,H);
-    var mX = W/2, mY = H/2;
-
-    var g = ctx.createRadialGradient(mX,mY,0,mX,mY,Math.min(W,H)*.48);
-    g.addColorStop(0,'rgba(245,158,11,.055)');
-    g.addColorStop(.6,'rgba(245,158,11,.015)');
+    var mX=W/2, mY=H/2;
+    var g=ctx.createRadialGradient(mX,mY,0,mX,mY,Math.min(W,H)*.5);
+    g.addColorStop(0,'rgba(245,158,11,.04)');
     g.addColorStop(1,'transparent');
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-
-    for(var i = 0; i < floaters.length; i++){
-      var p = floaters[i];
-      if(dying){
-        var dx=p.x-mX, dy=p.y-mY, d=Math.sqrt(dx*dx+dy*dy)||1;
-        p.vx += (dx/d)*.016; p.vy += (dy/d)*.016; p.a -= .006;
-      } else {
-        p.x += p.vx; p.y += p.vy;
-        if(p.x<-10||p.x>W+10) p.vx*=-1;
-        if(p.y<-10||p.y>H+10) p.vy*=-1;
-      }
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    for(var i=0;i<floaters.length;i++){
+      var p=floaters[i];
+      if(dying){ var dx=p.x-mX,dy=p.y-mY,d=Math.sqrt(dx*dx+dy*dy)||1; p.vx+=(dx/d)*.012; p.vy+=(dy/d)*.012; p.a-=.005; }
+      else { p.x+=p.vx; p.y+=p.vy; if(p.x<-10||p.x>W+10)p.vx*=-1; if(p.y<-10||p.y>H+10)p.vy*=-1; }
       if(p.a<=0) continue;
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle = p.gold ? '#F59E0B' : 'rgba(255,255,255,.8)';
-      ctx.globalAlpha = Math.max(0,p.a); ctx.fill();
+      ctx.fillStyle=p.gold?'#F59E0B':'rgba(255,255,255,.8)';
+      ctx.globalAlpha=Math.max(0,p.a); ctx.fill();
     }
-
-    var oa = dying ? Math.max(0,1-deathProg*2) : 1;
-    for(var i = 0; i < orbs.length; i++){
-      var o = orbs[i];
-      o.ang += o.spd;
-      var x = mX+Math.cos(o.ang)*o.rad;
-      var y = mY+Math.sin(o.ang)*o.rad*o.ry;
-      ctx.beginPath(); ctx.arc(x,y,o.r,0,Math.PI*2);
-      ctx.fillStyle = '#FFD700';
-      ctx.globalAlpha = o.a*oa; ctx.fill();
-    }
-
-    ctx.globalAlpha = 1;
-    if(dying) deathProg += .022;
-    if(deathProg < 3) raf = requestAnimationFrame(frame);
+    ctx.globalAlpha=1;
+    raf=requestAnimationFrame(frame);
   }
-  raf = requestAnimationFrame(frame);
+  raf=requestAnimationFrame(frame);
 
-  var done = false;
-  function dissolve(){
-    if(done) return; done = true; dying = true;
-    var t = document.querySelector('.intro-title-text');
-    if(t){
-      t.style.transition = 'transform 1.15s cubic-bezier(.55,0,1,.45), opacity .9s ease, filter 1.15s ease, letter-spacing 1.15s ease';
-      t.style.transform = 'scale(6.5)';
-      t.style.opacity = '0';
-      t.style.filter = 'blur(100px)';
-      t.style.letterSpacing = '.45em';
-    }
-    ov.classList.add('fade-out');
+  var done=false;
+  window._introDissolve = function dissolve(){
+    if(done) return; done=true; dying=true;
+    ov.classList.add('dissolving');
     document.body.classList.remove('intro-active');
-    setTimeout(function(){ ov.classList.add('gone'); cancelAnimationFrame(raf); }, 1800);
-  }
+    setTimeout(function(){ ov.classList.add('gone'); cancelAnimationFrame(raf); }, 1700);
+  };
 
-  window.addEventListener('wheel', dissolve, {once:true, passive:true});
-  window.addEventListener('touchmove', dissolve, {once:true, passive:true});
-  window.addEventListener('keydown', dissolve, {once:true});
-  ov.addEventListener('click', dissolve, {once:true});
-  setTimeout(dissolve, 5800);
+  window.addEventListener('wheel', window._introDissolve, {once:true, passive:true});
+  window.addEventListener('keydown', window._introDissolve, {once:true});
+  document.querySelector('.intro-scroll').addEventListener('click', window._introDissolve);
+  ov.addEventListener('click', function(e){
+    if(e.target===document.getElementById('globe-canvas')) return;
+    window._introDissolve();
+  });
+  setTimeout(window._introDissolve, 9000);
+})();
+
+/* ── EARTH GLOBE ── */
+(function(){
+  var gc = document.getElementById('globe-canvas');
+  if(!gc||!window.THREE) return;
+  var s = Math.min(window.innerWidth * 0.96, 820);
+  gc.style.width=s+'px'; gc.style.height=s+'px';
+  var gr = new THREE.WebGLRenderer({canvas:gc, antialias:true, alpha:true});
+  gr.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  gr.setSize(s,s); gr.setClearColor(0x000000,0);
+  var gsc=new THREE.Scene();
+  var gcam=new THREE.PerspectiveCamera(42,1,0.1,100);
+  gcam.position.z=2.5;
+
+  var globeMat = new THREE.ShaderMaterial({
+    uniforms:{ time:{value:0} },
+    vertexShader:`
+      varying vec2 vUv; varying vec3 vNormal;
+      void main(){ vUv=uv; vNormal=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+    `,
+    fragmentShader:`
+      uniform float time; varying vec2 vUv; varying vec3 vNormal;
+      float h21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+      float ns(vec2 p){
+        vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+        return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);
+      }
+      float fbm(vec2 p){ return ns(p)*.5+ns(p*2.1+.7)*.25+ns(p*4.3+1.4)*.125; }
+      void main(){
+        vec2 g1=abs(fract(vUv*22.0)-0.5); float grid=smoothstep(0.02,0.0,min(g1.x,g1.y));
+        vec2 g2=abs(fract(vUv*4.0)-0.5);  float grid2=smoothstep(0.028,0.0,min(g2.x,g2.y))*0.6;
+        float cont=fbm(vUv*2.6+.4)*fbm(vUv*5.8+vec2(2.9,1.3));
+        cont=smoothstep(0.06,0.3,cont);
+        vec3 col=mix(vec3(0.007,0.022,0.085),vec3(0.022,0.055,0.020),cont*0.55);
+        col+=max(grid,grid2)*vec3(0.62,0.43,0.02)*0.9;
+        float eq=smoothstep(0.3,0.0,abs(vUv.y-0.5))*0.1; col+=eq*vec3(0.7,0.5,0.0);
+        float rim=pow(1.0-max(0.0,dot(normalize(vNormal),vec3(0,0,1))),3.0);
+        col+=rim*vec3(0.95,0.66,0.03)*1.05;
+        gl_FragColor=vec4(col, 0.97-rim*0.25);
+      }
+    `,
+    transparent:true
+  });
+  var globe=new THREE.Mesh(new THREE.SphereGeometry(1,80,80), globeMat);
+  gsc.add(globe);
+
+  /* inner atmosphere */
+  gsc.add(new THREE.Mesh(new THREE.SphereGeometry(1.07,32,32), new THREE.ShaderMaterial({
+    vertexShader:`varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`varying vec3 vN; void main(){ float r=pow(1.0-max(0.0,dot(vN,vec3(0,0,1))),2.0); gl_FragColor=vec4(0.95,0.65,0.02,r*0.65); }`,
+    transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false
+  })));
+
+  /* outer corona */
+  gsc.add(new THREE.Mesh(new THREE.SphereGeometry(1.24,32,32), new THREE.ShaderMaterial({
+    vertexShader:`varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`varying vec3 vN; void main(){ float r=pow(1.0-max(0.0,dot(vN,vec3(0,0,1))),5.0); gl_FragColor=vec4(0.85,0.52,0.0,r*0.22); }`,
+    transparent:true, side:THREE.BackSide, blending:THREE.AdditiveBlending, depthWrite:false
+  })));
+
+  var isDrag=false,lx=0,ly=0,vx=0,vy=0.002,rx=0.2,ry=0;
+  function sd(x,y){isDrag=true;lx=x;ly=y;}
+  function md(x,y){if(!isDrag)return;vy+=(x-lx)*.006;vx+=(y-ly)*.006;lx=x;ly=y;}
+  function ed(){isDrag=false;}
+
+  gc.addEventListener('mousedown',function(e){sd(e.clientX,e.clientY);e.stopPropagation();});
+  window.addEventListener('mousemove',function(e){md(e.clientX,e.clientY);});
+  window.addEventListener('mouseup',ed);
+  gc.addEventListener('touchstart',function(e){sd(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();e.stopPropagation();},{passive:false});
+  window.addEventListener('touchmove',function(e){if(isDrag){md(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();}},{passive:false});
+  window.addEventListener('touchend',ed);
+
+  var gt=0;
+  (function loop(){
+    requestAnimationFrame(loop);
+    gt+=.0008;
+    if(!isDrag) vy+=.0012;
+    vx*=.95; vy*=.95;
+    rx+=vx; ry+=vy;
+    globe.rotation.x=rx; globe.rotation.y=ry;
+    globeMat.uniforms.time.value=gt;
+    gr.render(gsc,gcam);
+  })();
+
+  window.addEventListener('resize',function(){
+    var ns=Math.min(window.innerWidth*.96,820);
+    gc.style.width=ns+'px'; gc.style.height=ns+'px'; gr.setSize(ns,ns);
+  });
 })();
 </script>
 </body>
