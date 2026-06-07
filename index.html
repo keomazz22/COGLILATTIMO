@@ -14,7 +14,7 @@
       --gold: #F59E0B; --gold-b: #FFD700; --gold-d: #92400E;
       --purple: #7C3AED; --green: #10B981; --red: #EF4444;
       --bg: #000; --bg2: #080808; --bg3: #0F0F0F; --bg4: #141414;
-      --text: #FAFAFA; --muted: #71717A; --muted2: #52525B;
+      --text: #FAFAFA; --muted: #A1A1AA; --muted2: #71717A;
       --border: rgba(245,158,11,.15);
       --fd: 'Bebas Neue', sans-serif;
       --fh: 'Syne', sans-serif;
@@ -30,6 +30,11 @@
       content: ''; position: fixed; inset: 0; z-index: 9000; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
       opacity: 0.025; mix-blend-mode: overlay;
+    }
+    /* ─── VIGNETTE ─── */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(0,0,0,.7) 100%);
     }
 
     /* ─── CURSOR ─── */
@@ -88,6 +93,8 @@
 
     /* ─── LAYOUT ─── */
     section { position: relative; z-index: 1; }
+    /* dark backdrop on non-hero sections so particles don't bleed into text */
+    section:not(#hero):not(#cta) { background: rgba(0,0,0,.82); }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
     .eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
@@ -995,7 +1002,7 @@
       void main() {
         float d = length(gl_PointCoord - vec2(0.5));
         if (d > 0.5) discard;
-        float a = smoothstep(0.5, 0.1, d) * vAlpha * 0.7;
+        float a = smoothstep(0.5, 0.1, d) * vAlpha * 0.18;
         gl_FragColor = vec4(vColor, a);
       }
     `
