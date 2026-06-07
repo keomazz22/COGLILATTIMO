@@ -6,739 +6,617 @@
   <title>KeoTradez — Trade Like the 1%</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --gold:       #F59E0B;
-      --gold-bright:#FFD700;
-      --gold-dim:   #B45309;
-      --purple:     #8B5CF6;
-      --green:      #10B981;
-      --bg:         #000000;
-      --bg2:        #0A0A0A;
-      --bg3:        #111111;
-      --surface:    rgba(255,255,255,0.04);
-      --border:     rgba(245,158,11,0.18);
-      --text:       #F8FAFC;
-      --muted:      #94A3B8;
-      --font-display: 'Bebas Neue', sans-serif;
-      --font-head:    'Syne', sans-serif;
-      --font-body:    'Space Grotesk', sans-serif;
+      --gold: #F59E0B; --gold-b: #FFD700; --gold-d: #92400E;
+      --purple: #7C3AED; --green: #10B981; --red: #EF4444;
+      --bg: #000; --bg2: #080808; --bg3: #0F0F0F; --bg4: #141414;
+      --text: #FAFAFA; --muted: #71717A; --muted2: #52525B;
+      --border: rgba(245,158,11,.15);
+      --fd: 'Bebas Neue', sans-serif;
+      --fh: 'Syne', sans-serif;
+      --fb: 'Space Grotesk', sans-serif;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      overflow-x: hidden;
-      cursor: none;
-    }
+    body { background: var(--bg); color: var(--text); font-family: var(--fb); overflow-x: hidden; cursor: none; }
     a { color: inherit; text-decoration: none; }
-    img { max-width: 100%; display: block; }
 
-    /* CUSTOM CURSOR */
-    #cursor {
-      position: fixed; pointer-events: none; z-index: 9999;
-      width: 12px; height: 12px; border-radius: 50%;
-      background: var(--gold); mix-blend-mode: screen;
-      transform: translate(-50%, -50%);
-      transition: transform .1s;
-    }
-    #cursor-ring {
-      position: fixed; pointer-events: none; z-index: 9998;
-      width: 36px; height: 36px; border-radius: 50%;
-      border: 1.5px solid rgba(245,158,11,.5);
-      transform: translate(-50%, -50%);
-      transition: transform .25s ease, width .25s, height .25s;
-      box-shadow: 0 0 18px rgba(245,158,11,.3);
+    /* ─── NOISE OVERLAY ─── */
+    body::after {
+      content: ''; position: fixed; inset: 0; z-index: 9000; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025; mix-blend-mode: overlay;
     }
 
-    /* CANVAS */
-    #particles-canvas {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    /* ─── CURSOR ─── */
+    #cur { position: fixed; z-index: 9999; pointer-events: none; top: 0; left: 0; }
+    #cur-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--gold-b); transform: translate(-50%,-50%); transition: transform .08s; }
+    #cur-ring {
+      position: absolute; width: 32px; height: 32px; border-radius: 50%;
+      border: 1px solid rgba(255,215,0,.5); transform: translate(-50%,-50%);
+      transition: width .3s cubic-bezier(.23,1,.32,1), height .3s cubic-bezier(.23,1,.32,1), border-color .3s, transform .12s cubic-bezier(.23,1,.32,1);
     }
 
-    /* NAV */
+    /* ─── CANVAS ─── */
+    #bg-canvas { position: fixed; inset: 0; z-index: 0; }
+
+    /* ─── NAV ─── */
     nav {
-      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-      z-index: 1000; width: calc(100% - 48px); max-width: 1200px;
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;
+      width: calc(100% - 40px); max-width: 1100px;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 28px;
-      background: rgba(0,0,0,.7);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 4px 32px rgba(245,158,11,.08), inset 0 1px 0 rgba(255,255,255,.05);
-      transition: background .3s, border-color .3s;
+      padding: 12px 24px;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      border: 1px solid rgba(255,215,0,.1); border-radius: 14px;
+      transition: background .4s, border-color .4s;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 8px 40px rgba(0,0,0,.6);
     }
+    nav.scrolled { background: rgba(0,0,0,.85); border-color: rgba(255,215,0,.18); }
     .nav-logo {
-      font-family: var(--font-display); font-size: 1.5rem; letter-spacing: .08em;
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-family: var(--fd); font-size: 1.4rem; letter-spacing: .1em;
+      background: linear-gradient(90deg, var(--gold-b), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .nav-logo span { -webkit-text-fill-color: var(--text); }
-    .nav-links { display: flex; gap: 32px; align-items: center; }
-    .nav-links a {
-      font-size: .85rem; font-weight: 500; letter-spacing: .06em;
-      color: var(--muted); text-transform: uppercase; transition: color .2s; cursor: pointer;
-    }
-    .nav-links a:hover { color: var(--gold); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { font-size: .8rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); transition: color .2s; cursor: pointer; }
+    .nav-links a:hover { color: var(--text); }
     .nav-cta {
-      padding: 9px 22px; background: linear-gradient(135deg, var(--gold), #D97706);
-      border-radius: 8px; font-weight: 700; font-size: .85rem;
-      color: #000 !important; letter-spacing: .06em; cursor: pointer;
-      transition: box-shadow .25s, transform .2s;
-      box-shadow: 0 0 20px rgba(245,158,11,.35);
+      font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      padding: 8px 20px; border-radius: 8px; cursor: pointer;
+      background: linear-gradient(135deg, var(--gold-b), var(--gold));
+      color: #000; border: none; transition: box-shadow .3s, transform .2s;
+      box-shadow: 0 0 20px rgba(255,215,0,.25);
     }
-    .nav-cta:hover { box-shadow: 0 0 36px rgba(245,158,11,.65); transform: translateY(-1px); }
-    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
-    .hamburger span { width: 24px; height: 2px; background: var(--gold); border-radius: 2px; }
+    .nav-cta:hover { box-shadow: 0 0 40px rgba(255,215,0,.5); transform: translateY(-1px); }
+    .hamburger { display: none; flex-direction: column; gap: 4px; cursor: pointer; }
+    .hamburger span { width: 22px; height: 1.5px; background: var(--gold); border-radius: 2px; }
 
-    /* SECTIONS */
+    /* ─── MOBILE NAV ─── */
+    .mob-nav {
+      display: none; position: fixed; inset: 0; z-index: 998;
+      background: rgba(0,0,0,.97); backdrop-filter: blur(40px);
+      flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+    }
+    .mob-nav.open { display: flex; }
+    .mob-nav a { font-family: var(--fd); font-size: 3rem; color: var(--muted); transition: color .2s; letter-spacing: .06em; }
+    .mob-nav a:hover { color: var(--gold-b); }
+    .mob-close { position: absolute; top: 24px; right: 24px; background: none; border: none; font-size: 1.8rem; color: var(--muted); cursor: pointer; }
+
+    /* ─── LAYOUT ─── */
     section { position: relative; z-index: 1; }
-    .section-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-    .section-eyebrow {
-      display: inline-block; font-size: .75rem; font-weight: 700;
-      letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px;
-    }
-    .section-title {
-      font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 5.5rem);
-      line-height: .95; letter-spacing: .02em;
-    }
-    .section-title .accent {
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .section-sub { font-size: 1.05rem; color: var(--muted); line-height: 1.7; max-width: 560px; margin-top: 16px; }
-
-    /* HERO */
-    #hero {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      text-align: center; padding: 120px 24px 80px; overflow: hidden;
-    }
-    .hero-bg-orbs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-    .orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: orbFloat 8s ease-in-out infinite; }
-    .orb1 { width: 600px; height: 600px; background: rgba(245,158,11,.08); top: -20%; left: -15%; }
-    .orb2 { width: 400px; height: 400px; background: rgba(139,92,246,.07); bottom: -10%; right: -10%; animation-delay: -4s; }
-    .orb3 { width: 300px; height: 300px; background: rgba(16,185,129,.05); top: 40%; left: 50%; animation-delay: -2s; }
-    @keyframes orbFloat {
-      0%,100% { transform: translate(0,0) scale(1); }
-      33%      { transform: translate(30px,-20px) scale(1.05); }
-      66%      { transform: translate(-20px,30px) scale(.97); }
-    }
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 6px 18px; border-radius: 100px;
-      border: 1px solid rgba(245,158,11,.3); background: rgba(245,158,11,.06);
-      font-size: .78rem; font-weight: 600; letter-spacing: .15em;
-      text-transform: uppercase; color: var(--gold); margin-bottom: 28px;
-      animation: fadeSlideDown .8s ease both;
-    }
-    .hero-eyebrow-dot {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
-      box-shadow: 0 0 8px var(--green); animation: pulse-dot 1.5s infinite;
-    }
-    @keyframes pulse-dot { 0%,100%{ box-shadow:0 0 8px var(--green); } 50%{ box-shadow:0 0 18px var(--green); } }
-    .hero-title {
-      font-family: var(--font-display); font-size: clamp(4rem, 11vw, 10rem);
-      line-height: .92; letter-spacing: .02em;
-      animation: fadeSlideDown .9s .1s ease both;
-    }
-    .hero-title .line1 { display: block; color: var(--text); }
-    .hero-title .line2 {
-      display: block;
-      background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 50%, #D97706 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 0 30px rgba(245,158,11,.45));
-    }
-    .hero-title .line3 { display: block; color: var(--text); }
-    .hero-subtitle {
-      max-width: 600px; margin: 28px auto 0;
-      font-size: 1.15rem; color: var(--muted); line-height: 1.7;
-      animation: fadeSlideDown 1s .2s ease both;
-    }
-    .hero-subtitle strong { color: var(--text); font-weight: 600; }
-    .hero-actions {
-      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
-      margin-top: 44px; animation: fadeSlideDown 1s .3s ease both;
-    }
-    .btn-primary {
-      padding: 16px 40px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold), #D97706);
-      font-weight: 800; font-size: 1rem; color: #000;
-      letter-spacing: .06em; text-transform: uppercase;
-      cursor: pointer; border: none;
-      box-shadow: 0 0 40px rgba(245,158,11,.4), inset 0 1px 0 rgba(255,255,255,.2);
-      transition: box-shadow .3s, transform .2s; position: relative; overflow: hidden;
-    }
-    .btn-primary:hover { box-shadow: 0 0 60px rgba(245,158,11,.65); transform: translateY(-2px); }
-    .btn-secondary {
-      padding: 16px 40px; border-radius: 10px; background: transparent;
-      border: 1.5px solid rgba(245,158,11,.4); font-weight: 700; font-size: 1rem;
-      color: var(--gold); letter-spacing: .06em; text-transform: uppercase;
-      cursor: pointer; transition: .3s;
-    }
-    .btn-secondary:hover {
-      border-color: var(--gold); background: rgba(245,158,11,.06);
-      box-shadow: 0 0 30px rgba(245,158,11,.2); transform: translateY(-2px);
-    }
-    .hero-stats {
-      display: flex; gap: 48px; justify-content: center;
-      margin-top: 60px; flex-wrap: wrap;
-      animation: fadeSlideDown 1s .4s ease both;
-    }
-    .hero-stat { text-align: center; }
-    .hero-stat-num {
-      font-family: var(--font-display); font-size: 2.8rem; line-height: 1;
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hero-stat-label { font-size: .78rem; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 4px; }
-    .hero-divider { width: 1px; height: 48px; background: var(--border); align-self: center; }
-
-    /* TICKER */
-    .ticker-wrap {
-      position: relative; overflow: hidden;
-      background: linear-gradient(90deg, var(--bg), rgba(245,158,11,.04), var(--bg));
-      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0;
-    }
-    .ticker-inner { display: flex; white-space: nowrap; animation: ticker 28s linear infinite; }
-    .ticker-item {
-      padding: 0 32px; font-size: .82rem; font-weight: 600;
-      letter-spacing: .08em; color: var(--muted);
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
+      font-size: .72rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--gold);
     }
-    .ticker-item .sym { color: var(--gold); }
-    .ticker-item .up  { color: var(--green); }
-    .ticker-item .dn  { color: #F43F5E; }
-    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .eyebrow::before { content: ''; width: 20px; height: 1px; background: var(--gold); }
+    .h1 { font-family: var(--fd); font-size: clamp(5rem, 13vw, 11rem); line-height: .88; letter-spacing: .01em; }
+    .h2 { font-family: var(--fd); font-size: clamp(2.8rem, 7vw, 6rem); line-height: .9; letter-spacing: .02em; }
+    .gold-text { background: linear-gradient(135deg, var(--gold-b) 0%, var(--gold) 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gold-glow { filter: drop-shadow(0 0 40px rgba(255,215,0,.35)); }
+    .sub { font-size: 1.05rem; color: var(--muted); line-height: 1.8; }
 
-    /* REVEAL */
-    .reveal { opacity: 0; transform: translateY(40px); transition: opacity .7s ease, transform .7s ease; }
-    .reveal.visible { opacity: 1; transform: none; }
-    .reveal-left { opacity: 0; transform: translateX(-40px); transition: opacity .7s ease, transform .7s ease; }
-    .reveal-left.visible { opacity: 1; transform: none; }
-    .reveal-right { opacity: 0; transform: translateX(40px); transition: opacity .7s ease, transform .7s ease; }
-    .reveal-right.visible { opacity: 1; transform: none; }
+    /* ─── REVEAL ─── */
+    [data-reveal] { opacity: 0; transform: translateY(50px); transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1); }
+    [data-reveal="left"] { transform: translateX(-50px); }
+    [data-reveal="right"] { transform: translateX(50px); }
+    [data-reveal="scale"] { transform: scale(.95); }
+    [data-reveal].in { opacity: 1; transform: none; }
 
-    /* ABOUT */
-    #about {
-      padding: 120px 0;
-      background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(245,158,11,.04), transparent);
+    /* ─── HERO ─── */
+    #hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 140px 24px 100px; overflow: hidden; }
+    .hero-glow {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(245,158,11,.07), transparent 70%);
     }
-    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-    .about-badge-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-    .badge {
-      padding: 5px 14px; border-radius: 100px; border: 1px solid rgba(245,158,11,.25);
-      font-size: .75rem; font-weight: 600; color: var(--gold);
-      letter-spacing: .08em; text-transform: uppercase; background: rgba(245,158,11,.06);
+    .hero-line { display: block; overflow: hidden; }
+    .hero-line-inner { display: block; animation: lineReveal .9s cubic-bezier(.16,1,.3,1) both; }
+    .hero-line:nth-child(2) .hero-line-inner { animation-delay: .15s; }
+    .hero-line:nth-child(3) .hero-line-inner { animation-delay: .3s; }
+    @keyframes lineReveal { from { transform: translateY(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 32px;
+      padding: 6px 16px 6px 8px; border-radius: 100px;
+      border: 1px solid rgba(16,185,129,.25); background: rgba(16,185,129,.06);
+      font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--green);
+      animation: fadeUp .8s ease both;
     }
-    .about-text { font-size: 1.05rem; color: var(--muted); line-height: 1.8; margin-top: 16px; }
-    .about-text strong { color: var(--text); }
-    .chart-card {
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 20px;
-      padding: 28px; max-width: 440px; width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 40px rgba(245,158,11,.06);
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 0 0 rgba(16,185,129,.4); animation: livePulse 2s infinite;
+    }
+    @keyframes livePulse { 0%{ box-shadow: 0 0 0 0 rgba(16,185,129,.4); } 70%{ box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100%{ box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+    .hero-sub { max-width: 520px; margin: 28px auto 0; font-size: 1.1rem; color: var(--muted); line-height: 1.75; animation: fadeUp .9s .45s ease both; }
+    .hero-sub strong { color: var(--text); font-weight: 600; }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 48px; animation: fadeUp .9s .55s ease both; }
+    .hero-stats { display: flex; gap: 48px; justify-content: center; flex-wrap: wrap; margin-top: 72px; animation: fadeUp .9s .65s ease both; }
+    .hstat-num { font-family: var(--fd); font-size: 3rem; line-height: 1; background: linear-gradient(180deg, var(--gold-b), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hstat-lbl { font-size: .72rem; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; margin-top: 4px; }
+    .hdiv { width: 1px; height: 44px; background: rgba(255,255,255,.08); align-self: center; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 15px 36px; border-radius: 10px; border: none;
+      font-family: var(--fb); font-weight: 700; font-size: .9rem;
+      letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: .3s;
       position: relative; overflow: hidden;
     }
-    .chart-card::before {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(245,158,11,.04), transparent 60%); pointer-events: none;
-    }
-    .chart-symbol { font-family: var(--font-display); font-size: 1.4rem; }
-    .chart-price { font-family: var(--font-display); font-size: 2rem; color: var(--gold-bright); }
-    .chart-change { font-size: .85rem; color: var(--green); font-weight: 600; margin-top: 4px; margin-bottom: 20px; }
-    .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 100px; }
-    .bar {
-      flex: 1; border-radius: 3px 3px 0 0; min-height: 8px;
-      animation: barGrow 1.2s ease both;
-    }
-    .bar.up { background: linear-gradient(180deg, var(--green), rgba(16,185,129,.3)); }
-    .bar.dn { background: linear-gradient(180deg, #F43F5E, rgba(244,63,94,.3)); }
-    @keyframes barGrow { from { transform: scaleY(0); transform-origin: bottom; } to { transform: scaleY(1); } }
-    .floating-badge {
-      position: absolute; bottom: -16px; right: -10px;
-      background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 20px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.4);
-    }
-    .floating-badge-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-    .floating-badge-val { font-family: var(--font-display); font-size: 1.6rem; color: var(--green); margin-top: 2px; }
-    .footer-ig-inline {
-      display: inline-flex; align-items: center; gap: 8px; margin-top: 28px;
-      padding: 8px 18px; border-radius: 100px; border: 1px solid rgba(245,158,11,.25);
-      background: rgba(245,158,11,.05); font-size: .82rem; font-weight: 600; color: var(--gold);
-      transition: .25s; cursor: pointer;
-    }
-    .footer-ig-inline:hover { border-color: var(--gold); background: rgba(245,158,11,.1); }
+    .btn::before { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,.08); opacity: 0; transition: opacity .2s; }
+    .btn:hover::before { opacity: 1; }
+    .btn-gold { background: linear-gradient(135deg, var(--gold-b), var(--gold), #D97706); color: #000; box-shadow: 0 0 0 1px rgba(255,215,0,.2), 0 8px 32px rgba(255,215,0,.25); }
+    .btn-gold:hover { box-shadow: 0 0 0 1px rgba(255,215,0,.4), 0 8px 50px rgba(255,215,0,.5); transform: translateY(-2px); }
+    .btn-ghost { background: transparent; color: var(--gold); border: 1px solid rgba(255,215,0,.25); box-shadow: inset 0 0 20px rgba(255,215,0,.03); }
+    .btn-ghost:hover { border-color: rgba(255,215,0,.6); background: rgba(255,215,0,.05); transform: translateY(-2px); }
 
-    /* SERVICES */
-    #services { padding: 120px 0; }
-    .services-header { text-align: center; margin-bottom: 64px; }
-    .services-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-    .service-card {
-      position: relative; border-radius: 20px; padding: 36px;
-      background: var(--bg3); border: 1px solid rgba(255,255,255,.06);
-      transition: transform .3s, box-shadow .3s, border-color .3s;
-      cursor: pointer; overflow: hidden;
+    /* ─── TICKER ─── */
+    .ticker {
+      position: relative; overflow: hidden; padding: 14px 0;
+      border-top: 1px solid rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.04);
+      background: linear-gradient(90deg, rgba(0,0,0,1), rgba(245,158,11,.03) 50%, rgba(0,0,0,1));
     }
-    .service-card::before {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(245,158,11,.04), transparent);
+    .ticker::before, .ticker::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 120px; z-index: 2; pointer-events: none;
+    }
+    .ticker::before { left: 0; background: linear-gradient(90deg, #000, transparent); }
+    .ticker::after  { right: 0; background: linear-gradient(-90deg, #000, transparent); }
+    .ticker-track { display: flex; white-space: nowrap; animation: tick 30s linear infinite; }
+    .tick-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 28px; font-size: .78rem; font-weight: 600; letter-spacing: .06em; color: var(--muted2); }
+    .tick-item .sym { color: rgba(255,215,0,.7); }
+    .tick-item .up { color: var(--green); }
+    .tick-item .dn { color: var(--red); }
+    .tick-sep { color: rgba(255,255,255,.08); margin: 0 4px; }
+    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ─── ABOUT ─── */
+    #about { padding: 140px 0; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+    .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tag { padding: 4px 12px; border-radius: 6px; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border: 1px solid rgba(255,215,0,.2); color: var(--gold); background: rgba(255,215,0,.04); }
+    .about-body { font-size: 1rem; color: var(--muted); line-height: 1.85; margin-top: 20px; }
+    .about-body strong { color: var(--text); font-weight: 600; }
+    .ig-link {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; padding: 10px 20px;
+      border-radius: 8px; border: 1px solid rgba(255,215,0,.2); background: rgba(255,215,0,.04);
+      font-size: .82rem; font-weight: 600; color: var(--gold); transition: .25s;
+    }
+    .ig-link:hover { border-color: rgba(255,215,0,.5); background: rgba(255,215,0,.08); transform: translateY(-1px); }
+    /* chart widget */
+    .chart-widget {
+      background: var(--bg3); border: 1px solid rgba(255,255,255,.06); border-radius: 20px; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .chart-widget-top { padding: 20px 24px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+    .chart-sym { font-family: var(--fd); font-size: 1.2rem; letter-spacing: .06em; color: var(--muted); }
+    .chart-price { font-family: var(--fd); font-size: 2.6rem; letter-spacing: .02em; color: var(--text); margin-top: 4px; }
+    .chart-chg { font-size: .82rem; font-weight: 600; color: var(--green); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .chart-chg svg { width: 14px; height: 14px; }
+    .chart-badge { padding: 6px 12px; border-radius: 8px; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); font-size: .72rem; font-weight: 700; color: var(--green); letter-spacing: .1em; text-transform: uppercase; }
+    .chart-svg-wrap { padding: 16px 0 0; position: relative; }
+    .chart-svg-wrap svg { width: 100%; display: block; }
+    .chart-footer { padding: 16px 24px; display: flex; gap: 24px; border-top: 1px solid rgba(255,255,255,.04); }
+    .chart-stat { }
+    .chart-stat-val { font-family: var(--fd); font-size: 1.1rem; }
+    .chart-stat-lbl { font-size: .68rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+    .pnl-float {
+      position: absolute; bottom: -10px; right: 20px; z-index: 2;
+      background: linear-gradient(135deg, rgba(16,185,129,.15), rgba(16,185,129,.06));
+      border: 1px solid rgba(16,185,129,.3); border-radius: 12px; padding: 12px 18px;
+      backdrop-filter: blur(12px);
+    }
+    .pnl-float-lbl { font-size: .65rem; color: var(--green); letter-spacing: .12em; text-transform: uppercase; }
+    .pnl-float-val { font-family: var(--fd); font-size: 1.5rem; color: var(--green); margin-top: 2px; }
+
+    /* ─── GLOW LINE ─── */
+    .glow-line { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,215,0,.25) 50%, transparent); position: relative; }
+    .glow-line::after { content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 60px; height: 6px; background: var(--gold); filter: blur(8px); border-radius: 3px; }
+
+    /* ─── SERVICES ─── */
+    #services { padding: 140px 0; }
+    .services-hdr { text-align: center; margin-bottom: 72px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+    /* tilt card */
+    .card {
+      position: relative; border-radius: 20px; padding: 36px;
+      background: var(--bg3); overflow: hidden; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.05);
+      transition: border-color .3s, box-shadow .3s;
+      transform-style: preserve-3d;
+    }
+    .card::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,215,0,.07), transparent 60%);
       opacity: 0; transition: opacity .3s;
     }
-    .service-card:hover { transform: translateY(-6px); border-color: rgba(245,158,11,.3); box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 40px rgba(245,158,11,.1); }
-    .service-card:hover::before { opacity: 1; }
-    .service-card.featured {
-      border-color: rgba(245,158,11,.4);
-      background: linear-gradient(135deg, rgba(245,158,11,.07), var(--bg3));
-      box-shadow: 0 0 0 1px rgba(245,158,11,.1), 0 20px 60px rgba(0,0,0,.5), 0 0 60px rgba(245,158,11,.08);
+    .card:hover::before { opacity: 1; }
+    .card:hover { border-color: rgba(255,215,0,.25); box-shadow: 0 30px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,215,0,.08); }
+    .card.hot {
+      border-color: rgba(255,215,0,.3);
+      background: linear-gradient(145deg, rgba(255,215,0,.06), var(--bg3) 60%);
+      box-shadow: 0 0 0 1px rgba(255,215,0,.1), 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,215,0,.1);
     }
-    .service-card.featured::after {
-      content: 'MOST POPULAR'; position: absolute; top: 20px; right: 20px;
-      padding: 4px 12px; border-radius: 100px;
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      font-size: .65rem; font-weight: 800; color: #000; letter-spacing: .14em;
+    .card-hot-badge {
+      position: absolute; top: 20px; right: 20px;
+      padding: 4px 10px; border-radius: 6px;
+      background: linear-gradient(135deg, var(--gold-b), var(--gold));
+      font-size: .62rem; font-weight: 800; color: #000; letter-spacing: .14em; text-transform: uppercase;
     }
-    .service-icon {
-      width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-      margin-bottom: 24px; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.2);
+    .card-icon {
+      width: 48px; height: 48px; border-radius: 12px; margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.15);
     }
-    .service-icon svg { width: 26px; height: 26px; color: var(--gold); }
-    .service-title { font-family: var(--font-head); font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; line-height: 1.2; }
-    .service-desc { font-size: .92rem; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
-    .service-features { list-style: none; margin-bottom: 32px; display: flex; flex-direction: column; gap: 10px; }
-    .service-features li {
-      font-size: .88rem; color: var(--muted); display: flex; align-items: center; gap: 10px;
-    }
-    .check-icon {
-      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: inline-block;
-      background: rgba(16,185,129,.1); border: 1.5px solid var(--green);
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 8l3.5 3.5L13 4.5' stroke='%2310B981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    .card-icon svg { width: 22px; height: 22px; stroke: var(--gold); }
+    .card-title { font-family: var(--fh); font-size: 1.35rem; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+    .card-desc { font-size: .88rem; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
+    .card-feats { list-style: none; margin-bottom: 32px; display: flex; flex-direction: column; gap: 9px; }
+    .card-feats li { font-size: .84rem; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+    .feat-check {
+      width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; display: inline-block;
+      border: 1.5px solid var(--green); background: rgba(16,185,129,.08);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8l3 3L12.5 5' stroke='%2310B981' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-size: 10px; background-repeat: no-repeat; background-position: center;
     }
-    .service-price { font-family: var(--font-display); font-size: 2.8rem; line-height: 1; background: linear-gradient(135deg, var(--gold-bright), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .service-price-sub { font-size: .82rem; color: var(--muted); margin: 6px 0; }
-    .service-split { font-size: .82rem; color: var(--green); font-weight: 600; margin-bottom: 24px; }
-    .service-btn {
-      width: 100%; padding: 14px; border-radius: 10px; border: none;
-      font-family: var(--font-body); font-weight: 700; font-size: .92rem;
-      letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: .25s;
-    }
-    .service-btn.primary {
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold), #D97706); color: #000;
-      box-shadow: 0 0 28px rgba(245,158,11,.35);
-    }
-    .service-btn.primary:hover { box-shadow: 0 0 50px rgba(245,158,11,.6); transform: translateY(-2px); }
-    .service-btn.outline { background: transparent; color: var(--gold); border: 1.5px solid rgba(245,158,11,.35); }
-    .service-btn.outline:hover { border-color: var(--gold); background: rgba(245,158,11,.06); }
+    .card-price { font-family: var(--fd); font-size: 3rem; line-height: 1; background: linear-gradient(135deg, var(--gold-b), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .card-price-sub { font-size: .78rem; color: var(--muted); margin: 6px 0; }
+    .card-split { font-size: .78rem; color: var(--green); font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 6px; }
+    .split-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-    /* INNER CIRCLE */
-    #inner-circle { padding: 80px 0 120px; }
-    .ic-card {
-      position: relative; border-radius: 28px; overflow: hidden; padding: 64px;
-      background: linear-gradient(135deg, #0D0900, #110C00, #0A0A0A);
-      border: 1px solid rgba(245,158,11,.35);
-      box-shadow: 0 0 80px rgba(245,158,11,.1), inset 0 1px 0 rgba(255,215,0,.1);
+    /* ─── PAY STRIP ─── */
+    .pay-strip {
+      background: var(--bg3); border: 1px solid rgba(255,215,0,.1); border-radius: 20px; padding: 28px 32px;
+      display: flex; gap: 32px; align-items: center; flex-wrap: wrap;
+      background: linear-gradient(135deg, rgba(255,215,0,.04), var(--bg3));
     }
-    .ic-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-    .ic-glow {
-      position: absolute; width: 600px; height: 600px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(245,158,11,.12), transparent 70%);
-      top: -30%; right: -10%; animation: icPulse 5s ease-in-out infinite;
+    .pay-strip-text { flex: 1; min-width: 200px; }
+    .pay-strip-text h3 { font-family: var(--fh); font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+    .pay-strip-text p { font-size: .84rem; color: var(--muted); line-height: 1.65; }
+    .pay-pills { display: flex; gap: 16px; flex-wrap: wrap; }
+    .pay-pill { text-align: center; padding: 12px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
+    .pay-pill-val { font-family: var(--fd); font-size: 1.5rem; }
+    .pay-pill-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
+
+    /* ─── INNER CIRCLE ─── */
+    #ic { padding: 80px 0 140px; }
+    .ic-wrap {
+      position: relative; border-radius: 24px; overflow: hidden; padding: 72px 64px;
+      background: radial-gradient(ellipse 100% 80% at 80% 20%, rgba(255,215,0,.07), transparent 60%),
+                  radial-gradient(ellipse 60% 60% at 20% 80%, rgba(124,58,237,.07), transparent 60%),
+                  var(--bg3);
+      border: 1px solid rgba(255,215,0,.25);
+      box-shadow: 0 0 0 1px rgba(255,215,0,.04), 0 40px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,215,0,.1);
     }
-    .ic-glow2 {
-      position: absolute; width: 300px; height: 300px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(139,92,246,.1), transparent 70%);
-      bottom: -10%; left: 10%;
+    /* animated border beam */
+    .ic-wrap::before {
+      content: ''; position: absolute; inset: -1px; border-radius: inherit; z-index: -1;
+      background: linear-gradient(90deg, transparent 20%, rgba(255,215,0,.5) 50%, transparent 80%);
+      background-size: 200% 100%;
+      animation: borderBeam 4s linear infinite;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; padding: 1px;
     }
-    @keyframes icPulse { 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.1); opacity:.7; } }
+    @keyframes borderBeam { from { background-position: -200% 0; } to { background-position: 200% 0; } }
     .ic-badge {
-      display: inline-flex; align-items: center; gap: 8px; padding: 7px 20px; border-radius: 100px;
-      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.4);
-      font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-bright);
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 8px;
+      background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.3);
+      font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--gold-b);
     }
-    .ic-badge svg { width: 14px; height: 14px; }
-    .ic-title {
-      font-family: var(--font-display); font-size: clamp(2.8rem, 6vw, 5rem);
-      line-height: .92; letter-spacing: .02em; margin-top: 20px;
-    }
-    .ic-title span {
-      background: linear-gradient(135deg, var(--gold-bright) 0%, #FDE68A 40%, var(--gold) 70%, #D97706 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .ic-desc { font-size: 1.1rem; color: var(--muted); line-height: 1.8; max-width: 560px; margin-top: 20px; }
-    .ic-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 40px 0; }
-    .ic-feat {
-      padding: 20px 22px; border-radius: 14px;
-      background: rgba(255,255,255,.03); border: 1px solid rgba(245,158,11,.12);
-    }
-    .ic-feat-icon { margin-bottom: 8px; }
-    .ic-feat-title { font-size: .92rem; font-weight: 700; margin-bottom: 4px; }
-    .ic-feat-desc { font-size: .8rem; color: var(--muted); line-height: 1.5; }
-    .ic-price-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-    .ic-price {
-      font-family: var(--font-display); font-size: clamp(3rem, 6vw, 5rem);
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1;
-    }
-    .ic-lifetime {
-      padding: 8px 20px; border-radius: 100px; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3);
-      font-size: .8rem; font-weight: 700; color: var(--gold); letter-spacing: .1em; text-transform: uppercase;
-    }
-    .ic-btn {
-      display: inline-flex; align-items: center; gap: 10px; margin-top: 28px; padding: 18px 48px;
-      border-radius: 12px; border: none;
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold), #D97706);
-      font-family: var(--font-body); font-weight: 800; font-size: 1.05rem;
-      color: #000; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
-      box-shadow: 0 0 50px rgba(245,158,11,.45), inset 0 1px 0 rgba(255,255,255,.2);
-      transition: box-shadow .3s, transform .2s;
-    }
-    .ic-btn:hover { box-shadow: 0 0 80px rgba(245,158,11,.7); transform: translateY(-2px); }
-
-    /* STATS */
-    #stats { padding: 100px 0; border-top: 1px solid rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.04); }
-    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); }
-    .stat-item { text-align: center; padding: 48px 24px; border-right: 1px solid rgba(255,255,255,.05); }
-    .stat-item:last-child { border-right: none; }
-    .stat-num {
-      font-family: var(--font-display); font-size: 4rem;
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      display: inline-block; line-height: 1;
-    }
-    .stat-label { font-size: .82rem; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 10px; }
-    .stat-sub { font-size: .75rem; color: rgba(148,163,184,.5); margin-top: 4px; }
-
-    /* HOW */
-    #how { padding: 120px 0; }
-    .how-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 80px; align-items: center; }
-    .steps { display: flex; flex-direction: column; }
-    .step {
-      display: flex; gap: 24px; padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,.05);
-      cursor: pointer; transition: .3s;
-    }
-    .step:last-child { border-bottom: none; }
-    .step:hover .step-num-wrap { border-color: var(--gold); }
-    .step:hover .step-title { color: var(--gold); }
-    .step-num-wrap {
-      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      border: 1.5px solid rgba(255,255,255,.1); background: var(--bg3); transition: border-color .3s;
-    }
-    .step-num { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold); }
-    .step-title { font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; transition: color .3s; }
-    .step-desc { font-size: .88rem; color: var(--muted); line-height: 1.6; }
-    .how-visual { background: var(--bg3); border: 1px solid var(--border); border-radius: 24px; padding: 32px; overflow: hidden; }
-    .how-visual-header { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
-    .how-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .how-dot.r { background: #F43F5E; } .how-dot.y { background: var(--gold); } .how-dot.g { background: var(--green); }
-    .ai-terminal {
-      background: rgba(0,0,0,.6); border-radius: 12px; padding: 20px;
-      font-family: 'Space Grotesk', monospace; font-size: .82rem;
-      color: var(--green); line-height: 1.9; border: 1px solid rgba(16,185,129,.15);
-    }
-    .ai-terminal .prompt { color: var(--gold); }
-    .ai-terminal .comment { color: rgba(148,163,184,.5); }
-    .cursor-blink { display: inline-block; width: 8px; height: 14px; background: var(--green); animation: blink .8s infinite; vertical-align: middle; }
-    @keyframes blink { 0%,100%{ opacity:1; } 50%{ opacity:0; } }
-
-    /* TESTIMONIALS */
-    #testimonials { padding: 120px 0; }
-    .testi-header { text-align: center; margin-bottom: 64px; }
-    .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-    .testi-card {
-      background: var(--bg3); border: 1px solid rgba(255,255,255,.07); border-radius: 20px;
-      padding: 28px; transition: .3s; cursor: default;
-    }
-    .testi-card:hover { border-color: rgba(245,158,11,.25); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
-    .testi-stars { display: flex; gap: 3px; margin-bottom: 16px; }
-    .star { width: 16px; height: 16px; fill: var(--gold); }
-    .testi-text { font-size: .92rem; color: var(--muted); line-height: 1.7; margin-bottom: 24px; font-style: italic; }
-    .testi-text strong { color: var(--text); font-style: normal; }
-    .testi-author { display: flex; align-items: center; gap: 12px; }
-    .testi-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold), var(--purple));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: .85rem; color: #000; flex-shrink: 0;
-    }
-    .testi-name { font-weight: 700; font-size: .9rem; }
-    .testi-handle { font-size: .78rem; color: var(--muted); }
-    .testi-result { margin-top: 6px; font-size: .78rem; color: var(--green); font-weight: 600; }
-
-    /* FAQ */
-    #faq { padding: 120px 0; }
-    .faq-container { max-width: 780px; margin: 0 auto; }
-    .faq-header { text-align: center; margin-bottom: 56px; }
-    .faq-item { border-bottom: 1px solid rgba(255,255,255,.07); overflow: hidden; }
-    .faq-q {
-      width: 100%; background: none; border: none; text-align: left; padding: 22px 0;
-      display: flex; justify-content: space-between; align-items: center;
-      cursor: pointer; font-family: var(--font-body); font-size: 1rem; font-weight: 600;
-      color: var(--text); gap: 16px; transition: color .25s;
-    }
-    .faq-q:hover { color: var(--gold); }
-    .faq-icon {
-      width: 22px; height: 22px; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,.2); border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; transition: .3s;
-    }
-    .faq-icon svg { width: 10px; height: 10px; color: var(--gold); transition: transform .3s; }
-    .faq-item.open .faq-icon { border-color: var(--gold); background: rgba(245,158,11,.1); }
-    .faq-item.open .faq-icon svg { transform: rotate(45deg); }
-    .faq-a { max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .4s; padding: 0; }
-    .faq-item.open .faq-a { max-height: 400px; padding-bottom: 20px; }
-    .faq-a p { font-size: .92rem; color: var(--muted); line-height: 1.75; }
-
-    /* FINAL CTA */
-    #final-cta {
-      padding: 140px 24px; text-align: center;
-      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(245,158,11,.06), transparent);
-    }
-    .final-cta-title {
-      font-family: var(--font-display); font-size: clamp(3rem, 8vw, 7rem);
-      line-height: .92; letter-spacing: .02em; margin-bottom: 24px;
-    }
-    .final-cta-title .g {
-      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 0 40px rgba(245,158,11,.5));
-    }
-    .final-cta-sub { font-size: 1.1rem; color: var(--muted); max-width: 500px; margin: 0 auto 44px; line-height: 1.7; }
-    .final-cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-
-    /* GLOW DIVIDER */
-    .glow-divider {
-      height: 1px; position: relative; margin: 0;
-      background: linear-gradient(90deg, transparent, rgba(245,158,11,.4), transparent);
-    }
-    .glow-divider::after {
-      content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
-      width: 80px; height: 4px; border-radius: 2px; background: var(--gold); filter: blur(6px);
-    }
-
-    /* SHIMMER */
-    @keyframes shimmer { 0%{ background-position: -200% center; } 100%{ background-position: 200% center; } }
-    .shimmer-text {
-      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 40%, var(--gold) 80%);
+    .ic-title { font-family: var(--fd); font-size: clamp(3rem, 7vw, 5.5rem); line-height: .9; margin-top: 20px; }
+    .ic-title .shimmer {
+      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-b) 30%, #fff8dc 50%, var(--gold-b) 70%, var(--gold) 100%);
       background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       animation: shimmer 3s linear infinite;
     }
-
-    /* FOOTER */
-    footer { padding: 56px 24px 40px; border-top: 1px solid rgba(255,255,255,.05); }
-    .footer-inner { max-width: 1200px; margin: 0 auto; }
-    .footer-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 48px; }
-    .footer-logo { font-family: var(--font-display); font-size: 2rem; background: linear-gradient(135deg, var(--gold-bright), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .footer-tagline { font-size: .85rem; color: var(--muted); margin-top: 8px; max-width: 260px; line-height: 1.6; }
-    .footer-ig {
-      display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 8px 18px;
-      border-radius: 100px; border: 1px solid rgba(245,158,11,.25); background: rgba(245,158,11,.05);
-      font-size: .82rem; font-weight: 600; color: var(--gold); transition: .25s; cursor: pointer;
+    @keyframes shimmer { to { background-position: -200% center; } }
+    .ic-desc { font-size: 1.05rem; color: var(--muted); line-height: 1.8; max-width: 560px; margin-top: 20px; }
+    .ic-feats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 40px 0; }
+    .ic-feat {
+      padding: 18px 20px; border-radius: 12px;
+      background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05);
+      transition: border-color .3s, background .3s;
     }
-    .footer-ig:hover { border-color: var(--gold); background: rgba(245,158,11,.1); }
-    .footer-links { display: flex; gap: 56px; flex-wrap: wrap; }
-    .footer-col h4 { font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
-    .footer-col a { display: block; font-size: .88rem; color: var(--muted); margin-bottom: 12px; transition: color .2s; cursor: pointer; }
-    .footer-col a:hover { color: var(--text); }
-    .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,.05); }
-    .footer-copy { font-size: .8rem; color: rgba(148,163,184,.5); }
-    .footer-disc { font-size: .75rem; color: rgba(148,163,184,.3); max-width: 520px; line-height: 1.5; }
+    .ic-feat:hover { border-color: rgba(255,215,0,.2); background: rgba(255,215,0,.03); }
+    .ic-feat-icon { margin-bottom: 10px; }
+    .ic-feat-t { font-size: .88rem; font-weight: 700; margin-bottom: 4px; }
+    .ic-feat-d { font-size: .78rem; color: var(--muted); line-height: 1.55; }
+    .ic-price-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .ic-price { font-family: var(--fd); font-size: clamp(3.5rem, 7vw, 5.5rem); line-height: 1; background: linear-gradient(135deg, var(--gold-b), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .ic-badge2 { padding: 8px 18px; border-radius: 8px; border: 1px solid rgba(255,215,0,.3); background: rgba(255,215,0,.06); font-size: .75rem; font-weight: 700; color: var(--gold-b); letter-spacing: .1em; text-transform: uppercase; }
+    .ic-sub { font-size: .82rem; color: var(--muted); margin-top: 8px; }
 
-    /* ANIMATIONS */
-    @keyframes fadeSlideDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform: none; } }
+    /* ─── STATS ─── */
+    #stats { padding: 120px 0; border-top: 1px solid rgba(255,255,255,.03); border-bottom: 1px solid rgba(255,255,255,.03); }
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); }
+    .stat-col { text-align: center; padding: 52px 20px; border-right: 1px solid rgba(255,255,255,.04); }
+    .stat-col:last-child { border-right: none; }
+    .stat-num-wrap { font-family: var(--fd); font-size: 4.5rem; line-height: 1; background: linear-gradient(180deg, var(--gold-b) 0%, var(--gold) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .stat-lbl { font-size: .75rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-top: 10px; }
+    .stat-sub { font-size: .7rem; color: var(--muted2); margin-top: 4px; }
 
-    /* MOBILE NAV */
-    .mobile-nav {
-      display: none; position: fixed; inset: 0; z-index: 999;
-      background: rgba(0,0,0,.95); backdrop-filter: blur(24px);
-      flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+    /* ─── HOW ─── */
+    #how { padding: 140px 0; }
+    .how-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 80px; align-items: center; }
+    .steps { display: flex; flex-direction: column; margin-top: 48px; }
+    .step {
+      display: flex; gap: 20px; padding: 24px 0; border-bottom: 1px solid rgba(255,255,255,.04);
+      cursor: pointer; transition: .25s; position: relative;
     }
-    .mobile-nav.open { display: flex; }
-    .mobile-nav a { font-family: var(--font-display); font-size: 2.5rem; color: var(--text); letter-spacing: .06em; transition: color .2s; }
-    .mobile-nav a:hover { color: var(--gold); }
-    .mobile-close { position: absolute; top: 24px; right: 28px; background: none; border: none; cursor: pointer; font-size: 2rem; color: var(--muted); }
+    .step::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: transparent; transition: background .3s; border-radius: 2px; }
+    .step:hover::before { background: var(--gold); }
+    .step:last-child { border-bottom: none; }
+    .step-n {
+      font-family: var(--fd); font-size: 1.2rem; color: rgba(255,215,0,.3);
+      width: 36px; flex-shrink: 0; padding-top: 2px; transition: color .25s;
+    }
+    .step:hover .step-n { color: var(--gold-b); }
+    .step-t { font-family: var(--fh); font-size: 1rem; font-weight: 700; margin-bottom: 6px; transition: color .25s; }
+    .step:hover .step-t { color: var(--gold-b); }
+    .step-d { font-size: .84rem; color: var(--muted); line-height: 1.65; }
+    /* terminal */
+    .terminal {
+      background: #050505; border: 1px solid rgba(255,255,255,.07); border-radius: 16px;
+      overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .term-bar { padding: 14px 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,.05); background: rgba(255,255,255,.02); }
+    .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .term-dot.r { background: #FF5F56; }
+    .term-dot.y { background: #FFBD2E; }
+    .term-dot.g { background: #27C93F; }
+    .term-title { font-size: .72rem; color: var(--muted2); margin-left: 6px; font-family: monospace; letter-spacing: .06em; }
+    .term-body { padding: 20px; font-family: 'Space Grotesk', monospace; font-size: .8rem; line-height: 1.9; }
+    .tp { color: rgba(255,215,0,.8); }
+    .tc { color: rgba(148,163,184,.4); }
+    .tg { color: var(--green); }
+    .tr { color: var(--red); }
+    .tw { color: rgba(250,250,250,.85); }
+    .tb { color: var(--gold-b); }
+    .tblink { display: inline-block; width: 7px; height: 13px; background: var(--green); animation: tblink .75s step-end infinite; vertical-align: middle; }
+    @keyframes tblink { 50% { opacity: 0; } }
+    .term-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(255,255,255,.04); border-top: 1px solid rgba(255,255,255,.04); }
+    .term-metric { padding: 14px 16px; background: #050505; text-align: center; }
+    .term-metric-val { font-family: var(--fd); font-size: 1.4rem; }
+    .term-metric-lbl { font-size: .65rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
 
-    /* RESPONSIVE */
+    /* ─── TESTIMONIALS ─── */
+    #testi { padding: 140px 0; }
+    .testi-hdr { text-align: center; margin-bottom: 72px; }
+    .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .tcard {
+      background: var(--bg3); border: 1px solid rgba(255,255,255,.05); border-radius: 18px; padding: 28px;
+      transition: .3s; position: relative; overflow: hidden;
+    }
+    .tcard::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 0% 0%, rgba(255,215,0,.04), transparent 60%); }
+    .tcard:hover { border-color: rgba(255,215,0,.2); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,215,0,.05); }
+    .tcard-stars { display: flex; gap: 2px; margin-bottom: 16px; }
+    .tcard-stars svg { width: 14px; height: 14px; fill: var(--gold); }
+    .tcard-text { font-size: .88rem; color: var(--muted); line-height: 1.75; margin-bottom: 24px; font-style: italic; }
+    .tcard-text strong { color: var(--text); font-style: normal; }
+    .tcard-author { display: flex; align-items: center; gap: 12px; }
+    .tcard-av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .82rem; color: #000; flex-shrink: 0; }
+    .tcard-name { font-weight: 700; font-size: .86rem; }
+    .tcard-prog { font-size: .74rem; color: var(--muted2); }
+    .tcard-result { font-size: .74rem; color: var(--green); font-weight: 600; margin-top: 3px; }
+
+    /* ─── FAQ ─── */
+    #faq { padding: 140px 0; }
+    .faq-inner { max-width: 720px; margin: 0 auto; }
+    .faq-hdr { text-align: center; margin-bottom: 56px; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,.06); }
+    .faq-btn {
+      width: 100%; background: none; border: none; text-align: left; padding: 20px 0;
+      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      font-family: var(--fb); font-size: .95rem; font-weight: 600; color: var(--text); cursor: pointer; transition: color .2s;
+    }
+    .faq-btn:hover { color: var(--gold); }
+    .faq-ico { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; transition: .3s; }
+    .faq-ico svg { width: 9px; height: 9px; stroke: var(--gold); transition: transform .3s; }
+    .faq-item.open .faq-ico { border-color: var(--gold); background: rgba(255,215,0,.08); }
+    .faq-item.open .faq-ico svg { transform: rotate(45deg); }
+    .faq-ans { max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .4s; }
+    .faq-item.open .faq-ans { max-height: 300px; padding-bottom: 18px; }
+    .faq-ans p { font-size: .88rem; color: var(--muted); line-height: 1.8; }
+
+    /* ─── FINAL CTA ─── */
+    #cta {
+      padding: 160px 24px; text-align: center;
+      background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(255,215,0,.05), transparent 70%);
+    }
+    .cta-title { font-family: var(--fd); font-size: clamp(3.5rem, 9vw, 8rem); line-height: .9; letter-spacing: .01em; margin-bottom: 24px; }
+    .cta-sub { font-size: 1.05rem; color: var(--muted); max-width: 480px; margin: 0 auto 48px; line-height: 1.75; }
+    .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* ─── FOOTER ─── */
+    footer { padding: 60px 24px 40px; border-top: 1px solid rgba(255,255,255,.04); }
+    .foot-inner { max-width: 1100px; margin: 0 auto; }
+    .foot-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 48px; }
+    .foot-logo { font-family: var(--fd); font-size: 1.8rem; background: linear-gradient(90deg, var(--gold-b), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .foot-tag { font-size: .82rem; color: var(--muted); margin-top: 8px; max-width: 240px; line-height: 1.65; }
+    .foot-cols { display: flex; gap: 52px; flex-wrap: wrap; }
+    .foot-col h4 { font-size: .7rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
+    .foot-col a { display: block; font-size: .84rem; color: var(--muted); margin-bottom: 10px; transition: color .2s; cursor: pointer; }
+    .foot-col a:hover { color: var(--text); }
+    .foot-bot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,.04); }
+    .foot-copy { font-size: .76rem; color: var(--muted2); }
+    .foot-disc { font-size: .7rem; color: rgba(113,113,122,.4); max-width: 500px; line-height: 1.55; }
+
+    /* ─── RESPONSIVE ─── */
     @media (max-width: 1024px) {
-      .services-grid { grid-template-columns: 1fr; max-width: 540px; margin: 0 auto; }
-      .about-grid, .how-grid { grid-template-columns: 1fr; gap: 48px; }
-      .stats-grid { grid-template-columns: repeat(2,1fr); }
-      .stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,.05); }
-      .ic-features-grid { grid-template-columns: 1fr 1fr; }
-      .testi-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+      .cards-grid, .about-grid, .how-grid { grid-template-columns: 1fr; max-width: 560px; margin-left: auto; margin-right: auto; }
+      .stats-row { grid-template-columns: repeat(2,1fr); }
+      .stat-col { border-bottom: 1px solid rgba(255,255,255,.04); }
+      .ic-feats { grid-template-columns: repeat(2,1fr); }
+      .testi-grid { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; }
+      .ic-wrap { padding: 48px 32px; }
     }
     @media (max-width: 768px) {
       .nav-links { display: none; }
       .hamburger { display: flex; }
-      .hero-divider { display: none; }
+      .ic-feats { grid-template-columns: 1fr; }
+      .foot-top { flex-direction: column; }
+      .hdiv { display: none; }
       .hero-stats { gap: 28px; }
-      .ic-card { padding: 36px 24px; }
-      .ic-features-grid { grid-template-columns: 1fr; }
-      .footer-top { flex-direction: column; }
     }
     @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr; }
-      .hero-actions { flex-direction: column; }
-      .hero-actions .btn-primary, .hero-actions .btn-secondary { width: 100%; text-align: center; }
+      .stats-row { grid-template-columns: 1fr; }
+      .hero-btns { flex-direction: column; }
+      .hero-btns .btn { width: 100%; justify-content: center; }
+      .cta-btns { flex-direction: column; align-items: center; }
     }
   </style>
 </head>
 <body>
 
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
-<canvas id="particles-canvas"></canvas>
+<div id="cur"><div id="cur-dot"></div><div id="cur-ring"></div></div>
+<canvas id="bg-canvas"></canvas>
 
 <!-- MOBILE NAV -->
-<div class="mobile-nav" id="mobileNav">
-  <button class="mobile-close" onclick="document.getElementById('mobileNav').classList.remove('open')" aria-label="Close menu">&#x2715;</button>
-  <a href="#services" onclick="document.getElementById('mobileNav').classList.remove('open')">Services</a>
-  <a href="#inner-circle" onclick="document.getElementById('mobileNav').classList.remove('open')">Inner Circle</a>
-  <a href="#testimonials" onclick="document.getElementById('mobileNav').classList.remove('open')">Results</a>
-  <a href="#faq" onclick="document.getElementById('mobileNav').classList.remove('open')">FAQ</a>
-  <a href="#services" onclick="document.getElementById('mobileNav').classList.remove('open')" style="color:var(--gold)">Join Now</a>
+<div class="mob-nav" id="mobNav">
+  <button class="mob-close" onclick="document.getElementById('mobNav').classList.remove('open')">&#x2715;</button>
+  <a href="#services" onclick="document.getElementById('mobNav').classList.remove('open')">Services</a>
+  <a href="#ic" onclick="document.getElementById('mobNav').classList.remove('open')">Inner Circle</a>
+  <a href="#testi" onclick="document.getElementById('mobNav').classList.remove('open')">Results</a>
+  <a href="#faq" onclick="document.getElementById('mobNav').classList.remove('open')">FAQ</a>
+  <a href="#services" onclick="document.getElementById('mobNav').classList.remove('open')" style="color:var(--gold-b)">Join Now</a>
 </div>
 
 <!-- NAV -->
-<nav>
-  <div class="nav-logo">KEO<span>TRADEZ</span></div>
+<nav id="nav">
+  <div class="nav-logo">KEOTRADEZ</div>
   <div class="nav-links">
     <a href="#services">Services</a>
-    <a href="#inner-circle">Inner Circle</a>
-    <a href="#testimonials">Results</a>
+    <a href="#ic">Inner Circle</a>
+    <a href="#testi">Results</a>
     <a href="#faq">FAQ</a>
     <a href="#services" class="nav-cta">Join Now</a>
   </div>
-  <div class="hamburger" onclick="document.getElementById('mobileNav').classList.add('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </div>
+  <div class="hamburger" onclick="document.getElementById('mobNav').classList.add('open')"><span></span><span></span><span></span></div>
 </nav>
 
 <!-- HERO -->
 <section id="hero">
-  <div class="hero-bg-orbs">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-  </div>
+  <div class="hero-glow"></div>
   <div style="position:relative;z-index:1;width:100%;">
     <div style="display:flex;justify-content:center;">
-      <div class="hero-eyebrow">
-        <span class="hero-eyebrow-dot"></span>
-        Trusted by 500+ traders worldwide
-      </div>
+      <div class="hero-badge"><span class="live-dot"></span>500+ Traders Trained Worldwide</div>
     </div>
-    <h1 class="hero-title">
-      <span class="line1">STOP LOSING.</span>
-      <span class="line2">START PRINTING.</span>
-      <span class="line3">TRADE ELITE.</span>
+    <h1 class="h1" style="margin:0 auto;max-width:900px;">
+      <span class="hero-line"><span class="hero-line-inner">STOP</span></span>
+      <span class="hero-line"><span class="hero-line-inner gold-text gold-glow">LOSING.</span></span>
+      <span class="hero-line"><span class="hero-line-inner" style="animation-delay:.3s">START PRINTING.</span></span>
     </h1>
-    <p class="hero-subtitle">
-      Join <strong>@keotradez</strong> — where serious traders come to level up.
-      Proven strategies, real mentorship, and a community built for those who play to win.
-    </p>
-    <div class="hero-actions">
-      <a href="#services"><button class="btn-primary">View Programs</button></a>
-      <a href="#inner-circle"><button class="btn-secondary">Inner Circle — $3,500 Lifetime</button></a>
+    <p class="hero-sub">Join <strong>@keotradez</strong> — proven strategies, real mentorship, and a community built for those who play to win.</p>
+    <div class="hero-btns">
+      <a href="#services"><button class="btn btn-gold">View Programs</button></a>
+      <a href="#ic"><button class="btn btn-ghost">Inner Circle — $3,500 Lifetime</button></a>
     </div>
     <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="hero-stat-num" data-count="500">0</div>
-        <div class="hero-stat-label">Students</div>
+      <div>
+        <div class="hstat-num" data-count="500">0</div>
+        <div class="hstat-lbl">Students</div>
       </div>
-      <div class="hero-divider"></div>
-      <div class="hero-stat">
-        <div class="hero-stat-num" data-count="87">0</div>
-        <div class="hero-stat-label">Win Rate %</div>
+      <div class="hdiv"></div>
+      <div>
+        <div class="hstat-num" data-count="87">0</div>
+        <div class="hstat-lbl">Win Rate %</div>
       </div>
-      <div class="hero-divider"></div>
-      <div class="hero-stat">
-        <div class="hero-stat-num" data-count="3">0</div>
-        <div class="hero-stat-label">Years Live</div>
+      <div class="hdiv"></div>
+      <div>
+        <div class="hstat-num" data-count="3">0</div>
+        <div class="hstat-lbl">Years Live</div>
       </div>
-      <div class="hero-divider"></div>
-      <div class="hero-stat">
-        <div class="hero-stat-num">24/7</div>
-        <div class="hero-stat-label">Support</div>
+      <div class="hdiv"></div>
+      <div>
+        <div class="hstat-num">24/7</div>
+        <div class="hstat-lbl">Support</div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker-inner">
-    <span class="ticker-item"><span class="sym">BTC/USD</span><span class="up">+4.12%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">ES1!</span><span class="up">+1.87%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">EUR/USD</span><span class="up">+0.34%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">AAPL</span><span class="up">+2.56%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">GC1!</span><span class="up">+1.23%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">SPY</span><span class="dn">-0.41%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">NQ1!</span><span class="up">+2.91%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">ETH/USD</span><span class="up">+5.77%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">CL1!</span><span class="dn">-1.09%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">GBP/JPY</span><span class="up">+0.62%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">BTC/USD</span><span class="up">+4.12%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">ES1!</span><span class="up">+1.87%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">EUR/USD</span><span class="up">+0.34%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">AAPL</span><span class="up">+2.56%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">GC1!</span><span class="up">+1.23%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">SPY</span><span class="dn">-0.41%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">NQ1!</span><span class="up">+2.91%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">ETH/USD</span><span class="up">+5.77%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">CL1!</span><span class="dn">-1.09%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
-    <span class="ticker-item"><span class="sym">GBP/JPY</span><span class="up">+0.62%</span><span style="color:rgba(245,158,11,.3);padding:0 8px;">|</span></span>
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="tick-item"><span class="sym">BTC/USD</span><span class="up">+4.12%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">ES1!</span><span class="up">+1.87%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">EUR/USD</span><span class="up">+0.34%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">AAPL</span><span class="up">+2.56%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">GC1!</span><span class="up">+1.23%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">SPY</span><span class="dn">-0.41%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">NQ1!</span><span class="up">+2.91%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">ETH/USD</span><span class="up">+5.77%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">CL1!</span><span class="dn">-1.09%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">GBP/JPY</span><span class="up">+0.62%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">BTC/USD</span><span class="up">+4.12%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">ES1!</span><span class="up">+1.87%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">EUR/USD</span><span class="up">+0.34%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">AAPL</span><span class="up">+2.56%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">GC1!</span><span class="up">+1.23%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">SPY</span><span class="dn">-0.41%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">NQ1!</span><span class="up">+2.91%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">ETH/USD</span><span class="up">+5.77%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">CL1!</span><span class="dn">-1.09%</span><span class="tick-sep">|</span></span>
+    <span class="tick-item"><span class="sym">GBP/JPY</span><span class="up">+0.62%</span><span class="tick-sep">|</span></span>
   </div>
 </div>
 
 <!-- ABOUT -->
 <section id="about">
-  <div class="section-container">
+  <div class="wrap">
     <div class="about-grid">
-      <div class="reveal-left">
-        <div class="about-badge-row">
-          <span class="badge">Verified Trader</span>
-          <span class="badge">Live Track Record</span>
-          <span class="badge">500+ Students</span>
-        </div>
-        <p class="section-eyebrow">About Keotradez</p>
-        <h2 class="section-title">BUILT BY A<br><span class="accent">REAL TRADER.</span></h2>
-        <p class="about-text">No fake screenshots. No overnight success stories. <strong>Just a grinder who cracked the code</strong> and decided to bring serious students along for the ride.</p>
-        <p class="about-text" style="margin-top:14px;">From blowing accounts to consistently profitable — the journey wasn't pretty, but the <strong>system is proven</strong>. Every program is built from <strong>real experience</strong>, real losses, and real wins.</p>
-        <a href="https://instagram.com/keotradez" target="_blank" rel="noopener" class="footer-ig-inline">
+      <div data-reveal="left">
+        <div class="tag-row"><span class="tag">Verified Trader</span><span class="tag">Live Track Record</span><span class="tag">500+ Students</span></div>
+        <p class="eyebrow">About Keotradez</p>
+        <h2 class="h2" style="margin-top:14px;">BUILT BY<br>A <span class="gold-text">REAL</span><br>TRADER.</h2>
+        <p class="about-body">No fake screenshots. No overnight success stories. <strong>Just a grinder who cracked the code</strong> and decided to bring serious students along for the ride.</p>
+        <p class="about-body" style="margin-top:12px;">From blowing accounts to consistently profitable — the journey wasn't pretty, but the <strong>system is proven</strong>. Every program is built from <strong>real experience, real losses, and real wins.</strong></p>
+        <a href="https://instagram.com/keotradez" target="_blank" rel="noopener" class="ig-link">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
           @keotradez
         </a>
       </div>
-      <div class="reveal-right" style="position:relative;display:flex;justify-content:center;">
-        <div class="chart-card">
-          <div class="chart-symbol">NQ1! <span style="font-size:.9rem;color:var(--muted)">Nasdaq</span></div>
-          <div class="chart-price">21,847</div>
-          <div class="chart-change">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline;vertical-align:middle;margin-right:3px;"><polyline points="18 15 12 9 6 15"/></svg>
-            +312 pts (+1.45%) today
+      <div data-reveal="right" style="position:relative;">
+        <div class="chart-widget">
+          <div class="chart-widget-top">
+            <div>
+              <div class="chart-sym">NQ1! <span style="font-size:.85rem;color:var(--muted2)">NASDAQ 100</span></div>
+              <div class="chart-price">21,847</div>
+              <div class="chart-chg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                +312 pts &nbsp;+1.45% today
+              </div>
+            </div>
+            <div class="chart-badge">LIVE</div>
           </div>
-          <div class="chart-bars">
-            <div class="bar dn" style="height:35%;animation-delay:.00s"></div>
-            <div class="bar up" style="height:50%;animation-delay:.05s"></div>
-            <div class="bar up" style="height:42%;animation-delay:.10s"></div>
-            <div class="bar dn" style="height:38%;animation-delay:.15s"></div>
-            <div class="bar up" style="height:65%;animation-delay:.20s"></div>
-            <div class="bar up" style="height:72%;animation-delay:.25s"></div>
-            <div class="bar dn" style="height:55%;animation-delay:.30s"></div>
-            <div class="bar up" style="height:80%;animation-delay:.35s"></div>
-            <div class="bar up" style="height:90%;animation-delay:.40s"></div>
-            <div class="bar up" style="height:100%;animation-delay:.45s"></div>
-            <div class="bar dn" style="height:75%;animation-delay:.50s"></div>
-            <div class="bar up" style="height:95%;animation-delay:.55s"></div>
+          <div class="chart-svg-wrap">
+            <svg viewBox="0 0 440 120" preserveAspectRatio="none" style="height:120px;">
+              <defs>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity=".25"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,90 L30,82 L55,88 L80,70 L110,75 L140,60 L165,55 L190,65 L215,48 L245,38 L270,42 L295,28 L320,22 L350,30 L375,18 L400,12 L430,8 L440,5" stroke="none" fill="url(#lineGrad)"/>
+              <path d="M0,90 L30,82 L55,88 L80,70 L110,75 L140,60 L165,55 L190,65 L215,48 L245,38 L270,42 L295,28 L320,22 L350,30 L375,18 L400,12 L430,8 L440,5" stroke="#10B981" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="440" cy="5" r="4" fill="#10B981">
+                <animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;0.4;1" dur="1.5s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+            <div class="pnl-float">
+              <div class="pnl-float-lbl">Total PnL</div>
+              <div class="pnl-float-val">+$84,200</div>
+            </div>
           </div>
-          <div class="floating-badge">
-            <div class="floating-badge-label">Total PnL</div>
-            <div class="floating-badge-val">+$84,200</div>
+          <div class="chart-footer">
+            <div class="chart-stat"><div class="chart-stat-val" style="color:var(--green)">+$312</div><div class="chart-stat-lbl">Today</div></div>
+            <div class="chart-stat"><div class="chart-stat-val">21,535</div><div class="chart-stat-lbl">Open</div></div>
+            <div class="chart-stat"><div class="chart-stat-val">22,012</div><div class="chart-stat-lbl">Day High</div></div>
+            <div class="chart-stat"><div class="chart-stat-val" style="color:var(--gold)">87%</div><div class="chart-stat-lbl">Win Rate</div></div>
           </div>
         </div>
       </div>
@@ -746,548 +624,508 @@
   </div>
 </section>
 
-<div class="glow-divider"></div>
+<div class="glow-line"></div>
 
 <!-- SERVICES -->
 <section id="services">
-  <div class="section-container">
-    <div class="services-header reveal">
-      <p class="section-eyebrow">Programs &amp; Pricing</p>
-      <h2 class="section-title">CHOOSE YOUR<br><span class="accent">WEAPON.</span></h2>
-      <p class="section-sub" style="margin:16px auto 0;">Three clear paths. One goal. Financial freedom through disciplined, strategic trading.</p>
+  <div class="wrap">
+    <div class="services-hdr" data-reveal>
+      <p class="eyebrow">Programs & Pricing</p>
+      <h2 class="h2" style="margin-top:14px;">CHOOSE YOUR<br><span class="gold-text">WEAPON.</span></h2>
+      <p class="sub" style="max-width:480px;margin:16px auto 0;">Three clear paths. One goal. Financial freedom through disciplined, strategic trading.</p>
     </div>
-    <div class="services-grid">
+    <div class="cards-grid">
 
       <!-- Digital Course -->
-      <div class="service-card reveal" style="transition-delay:.0s">
-        <div class="service-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        </div>
-        <h3 class="service-title">Digital Course</h3>
-        <p class="service-desc">The complete trading blueprint — from mindset to execution. Learn at your own pace with lifetime access to every module and future updates.</p>
-        <ul class="service-features">
-          <li><span class="check-icon"></span>Full trading system from A to Z</li>
-          <li><span class="check-icon"></span>Lifetime course access + updates</li>
-          <li><span class="check-icon"></span>Entry, exit &amp; risk management</li>
-          <li><span class="check-icon"></span>Private community access</li>
-          <li><span class="check-icon"></span>Chart analysis walkthroughs</li>
-          <li><span class="check-icon"></span>Trading psychology module</li>
+      <div class="card" data-reveal style="transition-delay:.0s">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+        <h3 class="card-title">Digital Course</h3>
+        <p class="card-desc">The complete trading blueprint — from mindset to execution. Learn at your own pace with lifetime access to every module and future updates.</p>
+        <ul class="card-feats">
+          <li><span class="feat-check"></span>Full trading system from A to Z</li>
+          <li><span class="feat-check"></span>Lifetime access + all future updates</li>
+          <li><span class="feat-check"></span>Entry, exit &amp; risk management</li>
+          <li><span class="feat-check"></span>Private community access</li>
+          <li><span class="feat-check"></span>Chart analysis walkthroughs</li>
+          <li><span class="feat-check"></span>Trading psychology module</li>
         </ul>
-        <div class="service-price">$999</div>
-        <div class="service-price-sub">One-time payment or split it up</div>
-        <div class="service-split">3 split payments available — 0% interest</div>
-        <button class="service-btn outline">Get the Course &rarr;</button>
+        <div class="card-price">$999</div>
+        <div class="card-price-sub">One-time payment or split it up</div>
+        <div class="card-split"><span class="split-dot"></span>3 split payments — 0% interest</div>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;">Get the Course &rarr;</button>
       </div>
 
-      <!-- Advanced Coaching (featured) -->
-      <div class="service-card featured reveal" style="transition-delay:.1s">
-        <div class="service-icon" style="background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h3 class="service-title">1-on-1 Coaching<br><span style="color:var(--gold)">Advanced</span></h3>
-        <p class="service-desc">For traders already in the game — sharpen your edge, fix bad habits, and take your performance to professional level.</p>
-        <ul class="service-features">
-          <li><span class="check-icon"></span>Direct 1-on-1 sessions with Keo</li>
-          <li><span class="check-icon"></span>Personalized trade plan built for you</li>
-          <li><span class="check-icon"></span>Live trade reviews &amp; screen share</li>
-          <li><span class="check-icon"></span>Weekly progress check-ins</li>
-          <li><span class="check-icon"></span>Advanced risk &amp; position sizing</li>
-          <li><span class="check-icon"></span>Priority Discord &amp; WhatsApp access</li>
+      <!-- Advanced (featured) -->
+      <div class="card hot" data-reveal style="transition-delay:.1s">
+        <div class="card-hot-badge">Most Popular</div>
+        <div class="card-icon" style="background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.3);"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3 class="card-title">1-on-1 Coaching<br><span class="gold-text">Advanced</span></h3>
+        <p class="card-desc">For traders already in the game — sharpen your edge, fix bad habits, and take your performance to professional level.</p>
+        <ul class="card-feats">
+          <li><span class="feat-check"></span>Direct 1-on-1 sessions with Keo</li>
+          <li><span class="feat-check"></span>Personalized trade plan built for you</li>
+          <li><span class="feat-check"></span>Live trade reviews &amp; screen share</li>
+          <li><span class="feat-check"></span>Weekly progress check-ins</li>
+          <li><span class="feat-check"></span>Advanced risk &amp; position sizing</li>
+          <li><span class="feat-check"></span>Priority Discord &amp; WhatsApp access</li>
         </ul>
-        <div class="service-price">$2,000</div>
-        <div class="service-price-sub">Best suited for intermediate traders</div>
-        <div class="service-split">3 split payments available — 0% interest</div>
-        <button class="service-btn primary">Apply Now &rarr;</button>
+        <div class="card-price">$2,000</div>
+        <div class="card-price-sub">Best for intermediate traders</div>
+        <div class="card-split"><span class="split-dot"></span>3 split payments — 0% interest</div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center;">Apply Now &rarr;</button>
       </div>
 
-      <!-- Beginner Coaching -->
-      <div class="service-card reveal" style="transition-delay:.2s">
-        <div class="service-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        </div>
-        <h3 class="service-title">1-on-1 Coaching<br><span style="color:var(--gold)">Beginner</span></h3>
-        <p class="service-desc">Starting from zero? Perfect. This high-touch program covers everything — built specifically for complete beginners, zero assumptions made.</p>
-        <ul class="service-features">
-          <li><span class="check-icon"></span>Foundation to advanced curriculum</li>
-          <li><span class="check-icon"></span>Step-by-step guided learning path</li>
-          <li><span class="check-icon"></span>Weekly 1-on-1 coaching calls</li>
-          <li><span class="check-icon"></span>Full trade journaling system</li>
-          <li><span class="check-icon"></span>Platform setup &amp; orientation</li>
-          <li><span class="check-icon"></span>Ongoing support &amp; accountability</li>
+      <!-- Beginner -->
+      <div class="card" data-reveal style="transition-delay:.2s">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <h3 class="card-title">1-on-1 Coaching<br><span class="gold-text">Beginner</span></h3>
+        <p class="card-desc">Starting from zero? Perfect. High-touch program built specifically for complete beginners — zero assumptions made.</p>
+        <ul class="card-feats">
+          <li><span class="feat-check"></span>Foundation to advanced curriculum</li>
+          <li><span class="feat-check"></span>Step-by-step guided learning path</li>
+          <li><span class="feat-check"></span>Weekly 1-on-1 coaching calls</li>
+          <li><span class="feat-check"></span>Full trade journaling system</li>
+          <li><span class="feat-check"></span>Platform setup &amp; orientation</li>
+          <li><span class="feat-check"></span>Ongoing support &amp; accountability</li>
         </ul>
-        <div class="service-price">$2,500</div>
-        <div class="service-price-sub">Most comprehensive beginner program</div>
-        <div class="service-split">3 split payments available — 0% interest</div>
-        <button class="service-btn outline">Start Your Journey &rarr;</button>
+        <div class="card-price">$2,500</div>
+        <div class="card-price-sub">Most comprehensive beginner program</div>
+        <div class="card-split"><span class="split-dot"></span>3 split payments — 0% interest</div>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;">Start Your Journey &rarr;</button>
       </div>
 
-      <!-- Payment strip -->
-      <div class="reveal" style="transition-delay:.3s;background:var(--bg3);border:1px solid rgba(245,158,11,.12);border-radius:20px;padding:32px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
-        <div style="flex:1;min-width:200px;">
-          <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:8px;">Flexible Payments</div>
-          <p style="font-size:.88rem;color:var(--muted);line-height:1.7;">All programs support 3 split payments. No interest. No hidden fees. Your investment broken into manageable chunks — full access from day one.</p>
+      <!-- Pay strip -->
+      <div class="pay-strip" data-reveal style="transition-delay:.3s">
+        <div class="pay-strip-text">
+          <h3>Flexible Payments</h3>
+          <p>All programs support 3 split payments — no interest, no hidden fees. Full access from day one, pay as you grow.</p>
         </div>
-        <div style="display:flex;gap:20px;flex-wrap:wrap;">
-          <div style="text-align:center;">
-            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);">3x</div>
-            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Split Pay</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--green);">0%</div>
-            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Interest</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--text);">24/7</div>
-            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Support</div>
-          </div>
+        <div class="pay-pills">
+          <div class="pay-pill"><div class="pay-pill-val" style="color:var(--gold)">3x</div><div class="pay-pill-lbl">Split Pay</div></div>
+          <div class="pay-pill"><div class="pay-pill-val" style="color:var(--green)">0%</div><div class="pay-pill-lbl">Interest</div></div>
+          <div class="pay-pill"><div class="pay-pill-val">24/7</div><div class="pay-pill-lbl">Support</div></div>
         </div>
       </div>
+
     </div>
   </div>
 </section>
 
-<div class="glow-divider"></div>
+<div class="glow-line"></div>
 
 <!-- INNER CIRCLE -->
-<section id="inner-circle">
-  <div class="section-container">
-    <div class="ic-card reveal">
-      <div class="ic-bg">
-        <div class="ic-glow"></div>
-        <div class="ic-glow2"></div>
+<section id="ic">
+  <div class="wrap">
+    <div class="ic-wrap" data-reveal>
+      <div class="ic-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold-b)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Inner Circle — Lifetime Access
       </div>
-      <div style="position:relative;z-index:1;">
-        <div class="ic-badge">
-          <svg viewBox="0 0 24 24" fill="var(--gold)" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Inner Circle — Lifetime Access
-        </div>
-        <h2 class="ic-title">THE<br><span>VAULT.</span></h2>
-        <p class="ic-desc">This isn't a course. This is <strong style="color:var(--text);">everything</strong> — 1-on-1 coaching, live trading sessions, direct access to Keo, and a lifetime seat at the table with the most serious traders in the community.</p>
-
-        <div class="ic-features-grid">
-          <div class="ic-feat">
-            <div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-            <div class="ic-feat-title">1-on-1 Coaching</div>
-            <div class="ic-feat-desc">Personal sessions with Keo. Unlimited. For life. No expiry on your growth.</div>
-          </div>
-          <div class="ic-feat">
-            <div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-            <div class="ic-feat-title">Live Sessions</div>
-            <div class="ic-feat-desc">Watch Keo trade live. Ask questions in real-time. Learn from actual executions.</div>
-          </div>
-          <div class="ic-feat">
-            <div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.29h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 6 6l.73-.73a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 16z"/></svg></div>
-            <div class="ic-feat-title">Direct Access</div>
-            <div class="ic-feat-desc">WhatsApp &amp; Discord direct line. No middleman. Ask anything, anytime.</div>
-          </div>
-          <div class="ic-feat">
-            <div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-            <div class="ic-feat-title">All Programs Included</div>
-            <div class="ic-feat-desc">Digital course + beginner + advanced coaching. Everything bundled in one access.</div>
-          </div>
-          <div class="ic-feat">
-            <div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-            <div class="ic-feat-title">Lifetime Updates</div>
-            <div class="ic-feat-desc">Markets evolve. Your access doesn't expire. All future content included forever.</div>
-          </div>
-          <div class="ic-feat">
-            <div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></div>
-            <div class="ic-feat-title">Elite Community</div>
-            <div class="ic-feat-desc">Private network of high-level traders. Share setups, get feedback, grow together.</div>
-          </div>
-        </div>
-
-        <div class="ic-price-row">
-          <div class="ic-price">$3,500</div>
-          <div class="ic-lifetime">Lifetime Access</div>
-        </div>
-        <div style="font-size:.85rem;color:var(--muted);margin-top:8px;">That's less than a single bad trade. Pay once. Profit forever.</div>
-        <button class="ic-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Claim My Vault Seat
-        </button>
+      <h2 class="ic-title">THE<br><span class="shimmer">VAULT.</span></h2>
+      <p class="ic-desc">This isn't a course. This is <strong style="color:var(--text)">everything</strong> — 1-on-1 coaching, live trading sessions, direct access to Keo, and a lifetime seat with the most serious traders in the community.</p>
+      <div class="ic-feats">
+        <div class="ic-feat"><div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="ic-feat-t">1-on-1 Coaching</div><div class="ic-feat-d">Personal sessions with Keo. Unlimited. For life.</div></div>
+        <div class="ic-feat"><div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="ic-feat-t">Live Sessions</div><div class="ic-feat-d">Watch Keo trade live. Ask questions in real-time.</div></div>
+        <div class="ic-feat"><div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.29h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 6 6l.73-.73a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 16z"/></svg></div><div class="ic-feat-t">Direct Access</div><div class="ic-feat-d">WhatsApp &amp; Discord. No middleman. Anytime.</div></div>
+        <div class="ic-feat"><div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="ic-feat-t">All Programs</div><div class="ic-feat-d">Course + beginner + advanced. Everything included.</div></div>
+        <div class="ic-feat"><div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="ic-feat-t">Lifetime Updates</div><div class="ic-feat-d">All future content included. Forever. No expiry.</div></div>
+        <div class="ic-feat"><div class="ic-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></div><div class="ic-feat-t">Elite Community</div><div class="ic-feat-d">Private network. Share setups. Grow together.</div></div>
       </div>
+      <div class="ic-price-row">
+        <div class="ic-price">$3,500</div>
+        <div class="ic-badge2">Lifetime Access</div>
+      </div>
+      <div class="ic-sub">That's less than a single bad trade. Pay once. Profit forever.</div>
+      <button class="btn btn-gold" style="margin-top:28px;gap:10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Claim My Vault Seat
+      </button>
     </div>
   </div>
 </section>
 
 <!-- STATS -->
 <section id="stats">
-  <div class="section-container">
-    <div class="stats-grid">
-      <div class="stat-item reveal" style="transition-delay:.0s">
-        <span class="stat-num" data-count="500">0</span><span class="stat-num shimmer-text">+</span>
-        <div class="stat-label">Students Mentored</div>
+  <div class="wrap">
+    <div class="stats-row">
+      <div class="stat-col" data-reveal style="transition-delay:.0s">
+        <div class="stat-num-wrap"><span data-count="500">0</span>+</div>
+        <div class="stat-lbl">Students Mentored</div>
         <div class="stat-sub">Across all programs</div>
       </div>
-      <div class="stat-item reveal" style="transition-delay:.1s">
-        <span class="stat-num" data-count="87">0</span><span class="stat-num shimmer-text">%</span>
-        <div class="stat-label">Win Rate</div>
+      <div class="stat-col" data-reveal style="transition-delay:.1s">
+        <div class="stat-num-wrap"><span data-count="87">0</span>%</div>
+        <div class="stat-lbl">Win Rate</div>
         <div class="stat-sub">Verified live track record</div>
       </div>
-      <div class="stat-item reveal" style="transition-delay:.2s">
-        <span class="stat-num shimmer-text">$</span><span class="stat-num" data-count="2">0</span><span class="stat-num shimmer-text">M+</span>
-        <div class="stat-label">Student Profits</div>
+      <div class="stat-col" data-reveal style="transition-delay:.2s">
+        <div class="stat-num-wrap">$<span data-count="2">0</span>M+</div>
+        <div class="stat-lbl">Student Profits</div>
         <div class="stat-sub">Combined community results</div>
       </div>
-      <div class="stat-item reveal" style="transition-delay:.3s">
-        <span class="stat-num" data-count="3">0</span><span class="stat-num shimmer-text">+ Yrs</span>
-        <div class="stat-label">Live Teaching</div>
+      <div class="stat-col" data-reveal style="transition-delay:.3s">
+        <div class="stat-num-wrap"><span data-count="3">0</span>+ Yrs</div>
+        <div class="stat-lbl">Teaching Live</div>
         <div class="stat-sub">Consistent performance</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
+<!-- HOW -->
 <section id="how">
-  <div class="section-container">
+  <div class="wrap">
     <div class="how-grid">
       <div>
-        <p class="section-eyebrow reveal">How It Works</p>
-        <h2 class="section-title reveal">FROM ZERO TO<br><span class="accent">EXECUTION.</span></h2>
-        <div class="steps" style="margin-top:48px;">
-          <div class="step reveal" style="transition-delay:.0s">
-            <div class="step-num-wrap"><span class="step-num">01</span></div>
-            <div>
-              <div class="step-title">Choose Your Program</div>
-              <div class="step-desc">Pick the path that fits your current level — beginner, advanced, course, or vault. No wrong answer.</div>
-            </div>
-          </div>
-          <div class="step reveal" style="transition-delay:.1s">
-            <div class="step-num-wrap"><span class="step-num">02</span></div>
-            <div>
-              <div class="step-title">Onboarding Call</div>
-              <div class="step-desc">Get on a call, assess where you're at, build your custom roadmap, and set clear targets.</div>
-            </div>
-          </div>
-          <div class="step reveal" style="transition-delay:.2s">
-            <div class="step-num-wrap"><span class="step-num">03</span></div>
-            <div>
-              <div class="step-title">Execute &amp; Learn</div>
-              <div class="step-desc">Go through the curriculum, attend live sessions, review trades together. Real learning, real markets.</div>
-            </div>
-          </div>
-          <div class="step reveal" style="transition-delay:.3s">
-            <div class="step-num-wrap"><span class="step-num">04</span></div>
-            <div>
-              <div class="step-title">Start Printing</div>
-              <div class="step-desc">Apply the system. Track results. Refine. Repeat. This is where the transformation happens.</div>
-            </div>
-          </div>
+        <p class="eyebrow" data-reveal>How It Works</p>
+        <h2 class="h2" style="margin-top:14px;" data-reveal>FROM ZERO<br>TO <span class="gold-text">EXECUTION.</span></h2>
+        <div class="steps">
+          <div class="step" data-reveal style="transition-delay:.0s"><div class="step-n">01</div><div><div class="step-t">Choose Your Program</div><div class="step-d">Pick the path that fits your level — beginner, advanced, course, or vault. No wrong answer.</div></div></div>
+          <div class="step" data-reveal style="transition-delay:.1s"><div class="step-n">02</div><div><div class="step-t">Onboarding Call</div><div class="step-d">Get on a call, assess where you're at, build your custom roadmap, and set clear targets.</div></div></div>
+          <div class="step" data-reveal style="transition-delay:.2s"><div class="step-n">03</div><div><div class="step-t">Execute &amp; Learn</div><div class="step-d">Curriculum, live sessions, trade reviews together. Real learning, real markets.</div></div></div>
+          <div class="step" data-reveal style="transition-delay:.3s"><div class="step-n">04</div><div><div class="step-t">Start Printing</div><div class="step-d">Apply the system. Track results. Refine. Repeat. The transformation happens here.</div></div></div>
         </div>
       </div>
-      <div class="how-visual reveal-right">
-        <div class="how-visual-header">
-          <div class="how-dot r"></div><div class="how-dot y"></div><div class="how-dot g"></div>
-          <span style="font-size:.75rem;color:var(--muted);margin-left:8px;font-family:monospace;">keotradez — strategy.ai</span>
+      <div class="terminal" data-reveal="right">
+        <div class="term-bar">
+          <div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div>
+          <span class="term-title">keotradez — strategy.ai &nbsp;&nbsp; NQ1! 15m</span>
         </div>
-        <div class="ai-terminal">
-          <div><span class="prompt">$</span> analyze_market --pair NQ1! --tf 15m</div>
-          <div class="comment"># Scanning 847 data points...</div>
-          <div>Market structure: <span style="color:var(--green)">BULLISH</span></div>
-          <div><span class="prompt">$</span> find_setup --risk 1%</div>
-          <div class="comment"># Running pattern recognition...</div>
-          <div>Setup found: <span style="color:var(--gold)">FVG + OB confluence</span></div>
-          <div>Entry:&nbsp; <span style="color:var(--gold-bright)">21,800</span></div>
-          <div>Stop:&nbsp;&nbsp; <span style="color:#F43F5E">21,720</span></div>
-          <div>TP1:&nbsp;&nbsp; <span style="color:var(--green)">22,020 (+1:2.75R)</span></div>
-          <div>TP2:&nbsp;&nbsp; <span style="color:var(--green)">22,180 (+1:4.75R)</span></div>
-          <div><span class="prompt">$</span> <span class="cursor-blink"></span></div>
+        <div class="term-body">
+          <div><span class="tp">›</span> <span class="tw">analyze_market</span> <span class="tc">--pair NQ1! --tf 15m</span></div>
+          <div class="tc">&nbsp; Scanning 847 data points...</div>
+          <div>&nbsp; Market structure: <span class="tg">BULLISH ↑</span></div>
+          <div>&nbsp; HTF bias: <span class="tg">LONG</span> &nbsp; Session: <span class="tb">NY OPEN</span></div>
+          <div>&nbsp;</div>
+          <div><span class="tp">›</span> <span class="tw">find_setup</span> <span class="tc">--risk 1% --rr 3</span></div>
+          <div class="tc">&nbsp; Running pattern recognition...</div>
+          <div>&nbsp; Setup: <span class="tb">FVG + OB confluence ✓</span></div>
+          <div>&nbsp; Entry: <span class="tb">21,800</span> &nbsp; Stop: <span class="tr">21,720 (-80pts)</span></div>
+          <div>&nbsp; TP1:&nbsp; <span class="tg">22,040 (+1:3R)</span></div>
+          <div>&nbsp; TP2:&nbsp; <span class="tg">22,180 (+1:4.75R)</span></div>
+          <div>&nbsp;</div>
+          <div><span class="tp">›</span> <span class="tblink"></span></div>
         </div>
-        <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:100px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px;text-align:center;">
-            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--green);">+4.75R</div>
-            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Risk/Reward</div>
-          </div>
-          <div style="flex:1;min-width:100px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px;text-align:center;">
-            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);">87%</div>
-            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Confidence</div>
-          </div>
-          <div style="flex:1;min-width:100px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:14px;text-align:center;">
-            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--purple);">1%</div>
-            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Max Risk</div>
-          </div>
+        <div class="term-metrics">
+          <div class="term-metric"><div class="term-metric-val" style="color:var(--green)">+4.75R</div><div class="term-metric-lbl">Risk/Reward</div></div>
+          <div class="term-metric"><div class="term-metric-val" style="color:var(--gold)">87%</div><div class="term-metric-lbl">Confidence</div></div>
+          <div class="term-metric"><div class="term-metric-val" style="color:var(--purple)">1%</div><div class="term-metric-lbl">Max Risk</div></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="glow-divider"></div>
+<div class="glow-line"></div>
 
 <!-- TESTIMONIALS -->
-<section id="testimonials">
-  <div class="section-container">
-    <div class="testi-header">
-      <p class="section-eyebrow reveal">Results &amp; Reviews</p>
-      <h2 class="section-title reveal">STUDENTS ARE<br><span class="accent">WINNING.</span></h2>
+<section id="testi">
+  <div class="wrap">
+    <div class="testi-hdr" data-reveal>
+      <p class="eyebrow">Results &amp; Reviews</p>
+      <h2 class="h2" style="margin-top:14px;">STUDENTS ARE<br><span class="gold-text">WINNING.</span></h2>
     </div>
     <div class="testi-grid">
-      <div class="testi-card reveal" style="transition-delay:.0s">
-        <div class="testi-stars"><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <p class="testi-text">"I blew two accounts before finding Keo. In 90 days of his beginner coaching, I went from <strong>losing $400/week to making $600/week consistently.</strong> The structure he gives you is next level."</p>
-        <div class="testi-author">
-          <div class="testi-avatar">J</div>
-          <div><div class="testi-name">Jordan M.</div><div class="testi-handle">Beginner Coaching</div><div class="testi-result">+$9,400 in 3 months</div></div>
-        </div>
+      <div class="tcard" data-reveal style="transition-delay:.0s">
+        <div class="tcard-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p class="tcard-text">"I blew two accounts before finding Keo. In 90 days of his beginner coaching, I went from <strong>losing $400/week to making $600/week consistently.</strong>"</p>
+        <div class="tcard-author"><div class="tcard-av" style="background:linear-gradient(135deg,var(--gold),var(--purple))">J</div><div><div class="tcard-name">Jordan M.</div><div class="tcard-prog">Beginner Coaching</div><div class="tcard-result">+$9,400 in 3 months</div></div></div>
       </div>
-      <div class="testi-card reveal" style="transition-delay:.1s">
-        <div class="testi-stars"><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <p class="testi-text">"The Inner Circle is <strong>easily the best investment I've ever made.</strong> Live sessions alone are worth 10x the price. Keo trades live, explains everything, and actually cares about results."</p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--purple),var(--gold));">A</div>
-          <div><div class="testi-name">Alex R.</div><div class="testi-handle">Inner Circle</div><div class="testi-result">Quit 9-5 within 6 months</div></div>
-        </div>
+      <div class="tcard" data-reveal style="transition-delay:.1s">
+        <div class="tcard-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p class="tcard-text">"The Inner Circle is <strong>easily the best investment I've ever made.</strong> Live sessions alone are worth 10x the price. Keo actually cares about your results."</p>
+        <div class="tcard-author"><div class="tcard-av" style="background:linear-gradient(135deg,var(--purple),var(--gold))">A</div><div><div class="tcard-name">Alex R.</div><div class="tcard-prog">Inner Circle</div><div class="tcard-result">Quit 9-5 within 6 months</div></div></div>
       </div>
-      <div class="testi-card reveal" style="transition-delay:.2s">
-        <div class="testi-stars"><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <p class="testi-text">"The digital course alone changed how I see the markets. The <strong>risk management module is worth $999 alone.</strong> Came in clueless and left with a system I actually trust."</p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--green),var(--purple));">S</div>
-          <div><div class="testi-name">Sam K.</div><div class="testi-handle">Digital Course</div><div class="testi-result">First profitable month in week 3</div></div>
-        </div>
+      <div class="tcard" data-reveal style="transition-delay:.2s">
+        <div class="tcard-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p class="tcard-text">"Advanced coaching pushed me from break-even to <strong>averaging $3k/week net profit.</strong> Keo literally rebuilt my strategy. Worth every dollar."</p>
+        <div class="tcard-author"><div class="tcard-av" style="background:linear-gradient(135deg,var(--red),var(--gold))">T</div><div><div class="tcard-name">Tyler B.</div><div class="tcard-prog">Advanced Coaching</div><div class="tcard-result">$3k/week avg net profit</div></div></div>
       </div>
-      <div class="testi-card reveal" style="transition-delay:.3s">
-        <div class="testi-stars"><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <p class="testi-text">"Advanced coaching pushed me from break-even to <strong>averaging $3k/week net profit.</strong> Keo literally rebuilt my strategy from the ground up. Worth every single dollar."</p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,#F43F5E,var(--gold));">T</div>
-          <div><div class="testi-name">Tyler B.</div><div class="testi-handle">Advanced Coaching</div><div class="testi-result">$3k/week avg net profit</div></div>
-        </div>
+      <div class="tcard" data-reveal style="transition-delay:.3s">
+        <div class="tcard-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p class="tcard-text">"The digital course risk management module is <strong>worth $999 alone.</strong> Came in clueless, left with a system I trust completely."</p>
+        <div class="tcard-author"><div class="tcard-av" style="background:linear-gradient(135deg,var(--green),var(--purple))">S</div><div><div class="tcard-name">Sam K.</div><div class="tcard-prog">Digital Course</div><div class="tcard-result">Profitable by week 3</div></div></div>
       </div>
-      <div class="testi-card reveal" style="transition-delay:.4s">
-        <div class="testi-stars"><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <p class="testi-text">"The community alone is a cheat code. <strong>You're surrounded by people who actually trade.</strong> Combined with Keo's live sessions, I've never learned faster. Funded $200k prop firm account."</p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--gold),var(--green));">M</div>
-          <div><div class="testi-name">Marcus L.</div><div class="testi-handle">Inner Circle</div><div class="testi-result">Funded $200k prop firm</div></div>
-        </div>
+      <div class="tcard" data-reveal style="transition-delay:.4s">
+        <div class="tcard-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p class="tcard-text">"The community is a cheat code. <strong>Surrounded by people who actually trade.</strong> Funded a $200k prop firm account within 4 months of joining."</p>
+        <div class="tcard-author"><div class="tcard-av" style="background:linear-gradient(135deg,var(--gold),var(--green))">M</div><div><div class="tcard-name">Marcus L.</div><div class="tcard-prog">Inner Circle</div><div class="tcard-result">Funded $200k prop firm</div></div></div>
       </div>
-      <div class="testi-card reveal" style="transition-delay:.5s">
-        <div class="testi-stars"><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg class="star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <p class="testi-text">"Tried 3 other mentors before Keo. They all sold dreams. <strong>Keo shows receipts.</strong> His track record is real, his teaching is clear, and his system is repeatable. Nothing else comes close."</p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--purple),#F43F5E);">D</div>
-          <div><div class="testi-name">Daniel F.</div><div class="testi-handle">Advanced Coaching</div><div class="testi-result">Passed 3 prop firm challenges</div></div>
-        </div>
+      <div class="tcard" data-reveal style="transition-delay:.5s">
+        <div class="tcard-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p class="tcard-text">"Tried 3 mentors before Keo. They all sold dreams. <strong>Keo shows receipts.</strong> His system is repeatable, his teaching is clear. Passed 3 prop challenges."</p>
+        <div class="tcard-author"><div class="tcard-av" style="background:linear-gradient(135deg,var(--purple),var(--red))">D</div><div><div class="tcard-name">Daniel F.</div><div class="tcard-prog">Advanced Coaching</div><div class="tcard-result">Passed 3 prop challenges</div></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="glow-divider"></div>
+<div class="glow-line"></div>
 
 <!-- FAQ -->
 <section id="faq">
-  <div class="section-container">
-    <div class="faq-container">
-      <div class="faq-header">
-        <p class="section-eyebrow reveal">FAQ</p>
-        <h2 class="section-title reveal">GOT<br><span class="accent">QUESTIONS?</span></h2>
+  <div class="wrap">
+    <div class="faq-inner">
+      <div class="faq-hdr" data-reveal>
+        <p class="eyebrow">FAQ</p>
+        <h2 class="h2" style="margin-top:14px;">GOT <span class="gold-text">QUESTIONS?</span></h2>
       </div>
-      <div class="reveal">
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">I'm a complete beginner. Which program should I choose?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>The <strong>Beginner 1-on-1 Coaching Program</strong> is built exactly for you — starting from zero assumptions, most hands-on and structured. The Digital Course is also a solid starting point if you want to learn at your own pace.</p></div>
-        </div>
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">What markets do you trade and teach?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>Primarily <strong>Futures (NQ, ES, MNQ)</strong>, Forex pairs, and Crypto. The strategies translate across all major liquid markets. We'll identify the right market for your schedule and capital.</p></div>
-        </div>
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">How do the split payment plans work?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>All programs can be split into <strong>3 equal payments — 0% interest</strong>. You get full access immediately upon your first payment. Subsequent payments auto-charge every 30 days.</p></div>
-        </div>
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">Is the Inner Circle really lifetime access?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>Yes. <strong>One payment of $3,500 and you're in forever.</strong> Every future program, update, live session, and coaching call — included for life. No hidden renewals, no recurring fees.</p></div>
-        </div>
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">How much capital do I need to start?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>You can start paper trading with zero capital while you learn. For live trading, <strong>$1,000–$5,000 is a solid start</strong>. Many students also pursue prop firms — we cover this path extensively, trading funded $25k–$200k accounts.</p></div>
-        </div>
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">I'm already trading but not consistently profitable — can you help?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>The <strong>Advanced 1-on-1 Coaching</strong> is your path. We audit your current strategy, identify what's killing your edge, and rebuild from strength. Most intermediate traders see results within the first 4–6 weeks.</p></div>
-        </div>
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">How do I contact Keo directly?<span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-          <div class="faq-a"><p>DM <strong>@keotradez on Instagram</strong> directly. For enquiries, questions, or a free 15-minute discovery call — Keo responds personally.</p></div>
-        </div>
+      <div data-reveal>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">I'm a complete beginner. Which program?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p>The <strong>Beginner 1-on-1 Coaching</strong> is built for you — zero assumptions, most hands-on structure. The Digital Course also works if you prefer self-paced learning first.</p></div></div>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">What markets do you teach?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p>Primarily <strong>Futures (NQ, ES, MNQ)</strong>, Forex, and Crypto. Strategies work across all liquid markets. We'll find the right market for your schedule and capital.</p></div></div>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">How do the split payments work?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p><strong>3 equal payments, 0% interest.</strong> Full access from your very first payment. Subsequent payments auto-charge every 30 days. Simple and transparent.</p></div></div>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">Is Inner Circle really lifetime?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p>Yes. <strong>$3,500 once, in forever.</strong> Every future program, update, live session, coaching call — included for life. No renewals, no hidden fees. Ever.</p></div></div>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">How much capital do I need?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p>Start paper trading with zero. For live trading, <strong>$1k–$5k is a solid foundation.</strong> Many students pursue prop firms — we cover this path and show you how to trade $25k–$200k funded accounts.</p></div></div>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">I trade but I'm not consistently profitable. Help?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p><strong>Advanced 1-on-1 Coaching</strong> is your path. We audit your strategy, kill what's broken, and rebuild your edge from the ground up. Most see results in 4–6 weeks.</p></div></div>
+        <div class="faq-item"><button class="faq-btn" onclick="faq(this)">How do I reach Keo directly?<span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button><div class="faq-ans"><p>DM <strong>@keotradez on Instagram</strong> directly. Enquiries, questions, or a free 15-minute discovery call — Keo responds personally.</p></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FINAL CTA -->
-<section id="final-cta">
-  <div class="hero-bg-orbs">
-    <div class="orb orb1" style="animation-delay:-1s;"></div>
-    <div class="orb orb2" style="animation-delay:-3s;"></div>
-  </div>
+<!-- CTA -->
+<section id="cta">
   <div style="position:relative;z-index:1;">
-    <p class="section-eyebrow reveal">The Decision Is Yours</p>
-    <h2 class="final-cta-title reveal">YOUR NEXT TRADE<br><span class="g">STARTS NOW.</span></h2>
-    <p class="final-cta-sub reveal">The market doesn't wait. Neither should you. Choose your program and start your transformation today.</p>
-    <div class="final-cta-actions reveal">
-      <a href="#services"><button class="btn-primary">View All Programs</button></a>
-      <a href="https://instagram.com/keotradez" target="_blank" rel="noopener"><button class="btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px;"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>DM @keotradez</button></a>
+    <p class="eyebrow" data-reveal style="justify-content:center;display:flex;">The Decision Is Yours</p>
+    <h2 class="cta-title" data-reveal>YOUR NEXT<br>TRADE <span class="gold-text gold-glow">STARTS</span><br>NOW.</h2>
+    <p class="cta-sub" data-reveal>The market doesn't wait. Neither should you. Choose your program and start your transformation today.</p>
+    <div class="cta-btns" data-reveal>
+      <a href="#services"><button class="btn btn-gold">View All Programs</button></a>
+      <a href="https://instagram.com/keotradez" target="_blank" rel="noopener">
+        <button class="btn btn-ghost">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          DM @keotradez
+        </button>
+      </a>
     </div>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-inner">
-    <div class="footer-top">
+  <div class="foot-inner">
+    <div class="foot-top">
       <div>
-        <div class="footer-logo">KEOTRADEZ</div>
-        <p class="footer-tagline">Professional trading education. Real strategies. Real results. Built for those serious about financial freedom.</p>
-        <a href="https://instagram.com/keotradez" target="_blank" rel="noopener" class="footer-ig">
+        <div class="foot-logo">KEOTRADEZ</div>
+        <p class="foot-tag">Professional trading education. Real strategies. Real results. Built for those serious about financial freedom.</p>
+        <a href="https://instagram.com/keotradez" target="_blank" rel="noopener" class="ig-link" style="margin-top:20px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
           @keotradez
         </a>
       </div>
-      <div class="footer-links">
-        <div class="footer-col">
+      <div class="foot-cols">
+        <div class="foot-col">
           <h4>Programs</h4>
           <a href="#services">Digital Course — $999</a>
           <a href="#services">Advanced Coaching — $2,000</a>
           <a href="#services">Beginner Coaching — $2,500</a>
-          <a href="#inner-circle">Inner Circle — $3,500</a>
+          <a href="#ic">Inner Circle — $3,500</a>
         </div>
-        <div class="footer-col">
+        <div class="foot-col">
           <h4>Company</h4>
           <a href="#about">About Keo</a>
-          <a href="#testimonials">Student Results</a>
+          <a href="#testi">Student Results</a>
           <a href="#faq">FAQ</a>
           <a href="https://instagram.com/keotradez" target="_blank" rel="noopener">Instagram</a>
         </div>
       </div>
     </div>
-    <div class="footer-bottom">
-      <div class="footer-copy">&copy; 2024 KeoTradez. All rights reserved.</div>
-      <div class="footer-disc">Trading involves significant risk of loss. Past performance is not indicative of future results. All content is for educational purposes only. Please trade responsibly.</div>
+    <div class="foot-bot">
+      <div class="foot-copy">&copy; 2024 KeoTradez. All rights reserved.</div>
+      <div class="foot-disc">Trading involves significant risk of loss. Past performance is not indicative of future results. All content is for educational purposes only.</div>
     </div>
   </div>
 </footer>
 
 <script>
-// CURSOR
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-document.addEventListener('mousemove', e => {
-  cursor.style.left = e.clientX + 'px';
-  cursor.style.top  = e.clientY + 'px';
-  ring.style.left   = e.clientX + 'px';
-  ring.style.top    = e.clientY + 'px';
-});
-document.querySelectorAll('a,button,.service-card,.testi-card,.step').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    ring.style.width = '56px'; ring.style.height = '56px';
-    ring.style.borderColor = 'rgba(245,158,11,.8)';
-    cursor.style.transform = 'translate(-50%,-50%) scale(1.5)';
-  });
-  el.addEventListener('mouseleave', () => {
-    ring.style.width = '36px'; ring.style.height = '36px';
-    ring.style.borderColor = 'rgba(245,158,11,.5)';
-    cursor.style.transform = 'translate(-50%,-50%) scale(1)';
-  });
-});
+/* ── THREE.JS BACKGROUND ── */
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
 
-// PARTICLES
-const canvas = document.getElementById('particles-canvas');
-const ctx = canvas.getContext('2d');
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-window.addEventListener('resize', resize); resize();
-const particles = [];
-class Particle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.size = Math.random() * 1.2 + 0.2;
-    this.vx = (Math.random() - 0.5) * 0.3;
-    this.vy = (Math.random() - 0.5) * 0.3;
-    this.alpha = Math.random() * 0.5 + 0.1;
-    this.gold = Math.random() > 0.7;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 3;
+
+  // Particle geometry
+  const count = 2200;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
+
+  for (let i = 0; i < count; i++) {
+    const i3 = i * 3;
+    pos[i3]   = (Math.random() - 0.5) * 14;
+    pos[i3+1] = (Math.random() - 0.5) * 14;
+    pos[i3+2] = (Math.random() - 0.5) * 8;
+    const isGold = Math.random() > 0.6;
+    col[i3]   = isGold ? 0.96 : 0.98;
+    col[i3+1] = isGold ? 0.62 : 0.98;
+    col[i3+2] = isGold ? 0.04 : 0.98;
+    sizes[i]  = Math.random() * 2 + 0.5;
   }
-  update() {
-    this.x += this.vx; this.y += this.vy;
-    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-    ctx.fillStyle = this.gold ? `rgba(245,158,11,${this.alpha})` : `rgba(248,250,252,${this.alpha*0.4})`;
-    ctx.fill();
-  }
-}
-for (let i = 0; i < 180; i++) particles.push(new Particle());
-(function animParticles() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i+1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
-      const d = Math.sqrt(dx*dx + dy*dy);
-      if (d < 100) {
-        ctx.strokeStyle = `rgba(245,158,11,${0.04*(1-d/100)})`;
-        ctx.lineWidth = 0.4;
-        ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('size',     new THREE.BufferAttribute(sizes, 1));
+
+  const mat = new THREE.ShaderMaterial({
+    vertexColors: true,
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `
+      attribute float size;
+      varying vec3 vColor;
+      varying float vAlpha;
+      void main() {
+        vColor = color;
+        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = size * (280.0 / -mvPos.z);
+        gl_Position = projectionMatrix * mvPos;
+        vAlpha = clamp(1.0 - length(position.xy) / 8.0, 0.0, 1.0);
       }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vAlpha;
+      void main() {
+        float d = length(gl_PointCoord - vec2(0.5));
+        if (d > 0.5) discard;
+        float a = smoothstep(0.5, 0.1, d) * vAlpha * 0.7;
+        gl_FragColor = vec4(vColor, a);
+      }
+    `
+  });
+
+  const points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  let mx = 0, my = 0;
+  window.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth  - 0.5) * 0.4;
+    my = (e.clientY / window.innerHeight - 0.5) * 0.4;
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  let t = 0;
+  (function animate() {
+    requestAnimationFrame(animate);
+    t += 0.0008;
+    points.rotation.y = t * 0.15 + mx * 0.5;
+    points.rotation.x = t * 0.08 + my * 0.3;
+    const posArr = geo.attributes.position.array;
+    for (let i = 0; i < count; i++) {
+      posArr[i*3+1] += Math.sin(t * 1.5 + i * 0.01) * 0.0002;
     }
-    particles[i].update(); particles[i].draw();
-  }
-  requestAnimationFrame(animParticles);
+    geo.attributes.position.needsUpdate = true;
+    renderer.render(scene, camera);
+  })();
 })();
 
-// SCROLL REVEAL
-const revealObs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => revealObs.observe(el));
+/* ── CURSOR ── */
+const dot  = document.getElementById('cur-dot');
+const ring = document.getElementById('cur-ring');
+const cur  = document.getElementById('cur');
+let tx = 0, ty = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+(function cursorLoop() {
+  rx += (tx - rx) * 0.12; ry += (ty - ry) * 0.12;
+  cur.style.transform = `translate(${tx}px,${ty}px)`;
+  ring.style.transform = `translate(${rx - tx}px,${ry - ty}px) translate(-50%,-50%)`;
+  dot.style.transform  = `translate(-50%,-50%)`;
+  requestAnimationFrame(cursorLoop);
+})();
+document.querySelectorAll('a,button,.card,.tcard,.step').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width='52px'; ring.style.height='52px'; ring.style.borderColor='rgba(255,215,0,.9)'; dot.style.transform='translate(-50%,-50%) scale(2)'; });
+  el.addEventListener('mouseleave', () => { ring.style.width='32px'; ring.style.height='32px'; ring.style.borderColor='rgba(255,215,0,.5)'; dot.style.transform='translate(-50%,-50%) scale(1)'; });
+});
 
-// COUNTER
-function animCounter(el, target) {
-  const start = performance.now();
-  const dur = 1800;
-  (function update(now) {
-    const p = Math.min((now - start) / dur, 1);
-    const ease = 1 - Math.pow(1-p, 3);
-    el.textContent = Math.round(target * ease);
-    if (p < 1) requestAnimationFrame(update);
-    else el.textContent = target;
-  })(start);
+/* ── NAV SCROLL ── */
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+/* ── SCROLL REVEAL ── */
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('[data-reveal]').forEach((el,i) => {
+  const d = el.style.transitionDelay || '0s';
+  revObs.observe(el);
+});
+
+/* ── COUNTERS ── */
+function countUp(el, to) {
+  const s = performance.now();
+  const dur = 2000;
+  (function f(now) {
+    const p = Math.min((now-s)/dur, 1);
+    el.textContent = Math.round(to * (1 - Math.pow(1-p, 4)));
+    if (p < 1) requestAnimationFrame(f); else el.textContent = to;
+  })(s);
 }
 const cntObs = new IntersectionObserver(entries => {
   entries.forEach(e => {
-    if (e.isIntersecting && !e.target.dataset.done) {
-      e.target.dataset.done = '1';
-      animCounter(e.target, +e.target.dataset.count);
+    if (e.isIntersecting && !e.target._done) {
+      e.target._done = true;
+      countUp(e.target, +e.target.dataset.count);
     }
   });
 }, { threshold: 0.5 });
 document.querySelectorAll('[data-count]').forEach(el => cntObs.observe(el));
 
-// FAQ
-function toggleFaq(btn) {
+/* ── CARD TILT ── */
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top)  / r.height;
+    card.style.setProperty('--mx', (x * 100) + '%');
+    card.style.setProperty('--my', (y * 100) + '%');
+    card.style.transform = `perspective(800px) rotateX(${(y - 0.5) * -8}deg) rotateY(${(x - 0.5) * 8}deg) translateZ(4px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+    card.style.transition = 'transform .5s cubic-bezier(.23,1,.32,1), border-color .3s, box-shadow .3s';
+    setTimeout(() => card.style.transition = '', 500);
+  });
+});
+
+/* ── MAGNETIC BUTTONS ── */
+document.querySelectorAll('.btn-gold').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width/2)  * 0.25;
+    const y = (e.clientY - r.top  - r.height/2) * 0.25;
+    btn.style.transform = `translate(${x}px, ${y}px) translateY(-2px)`;
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = '';
+    btn.style.transition = 'transform .4s cubic-bezier(.23,1,.32,1), box-shadow .3s';
+    setTimeout(() => btn.style.transition = '', 400);
+  });
+});
+
+/* ── FAQ ── */
+function faq(btn) {
   const item = btn.closest('.faq-item');
   const open = item.classList.contains('open');
   document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
   if (!open) item.classList.add('open');
 }
 
-// NAV SCROLL
-const nav = document.querySelector('nav');
-window.addEventListener('scroll', () => {
-  nav.style.background = window.scrollY > 60 ? 'rgba(0,0,0,.92)' : 'rgba(0,0,0,.7)';
-  nav.style.borderColor = window.scrollY > 60 ? 'rgba(245,158,11,.3)' : 'rgba(245,158,11,.18)';
-});
-
-// REDUCED MOTION
+/* ── REDUCED MOTION ── */
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  document.querySelectorAll('.orb,.bar,.ic-glow').forEach(el => el.style.animation = 'none');
+  document.querySelectorAll('[style*="animation"]').forEach(el => el.style.animation = 'none');
 }
 </script>
 </body>
