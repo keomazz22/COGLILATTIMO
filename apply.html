@@ -1026,7 +1026,7 @@
      3. Copy the form ID (looks like "xyzabcde")
      4. Replace YOUR_FORMSPREE_ID with it
      OR: Provide your email to get this connected for you. -->
-<form id="hidden-form" action="https://formspree.io/f/YOUR_FORMSPREE_ID" method="POST" style="display:none;">
+<form id="hidden-form" action="https://formsubmit.co/ajax/keotradezcoachingprogram@gmail.com" method="POST" style="display:none;">
   <input type="hidden" name="first_name">
   <input type="hidden" name="last_name">
   <input type="hidden" name="email">
@@ -1043,6 +1043,8 @@
   <input type="hidden" name="source">
   <input type="hidden" name="_subject" value="🔥 New Coaching Application — KeoTradez">
   <input type="hidden" name="_replyto">
+  <input type="hidden" name="_captcha" value="false">
+  <input type="hidden" name="_template" value="table">
 </form>
 
 <script>
@@ -1312,11 +1314,16 @@ async function submitApplication() {
   };
 
   try {
-    const formAction = document.getElementById('hidden-form').action;
-    const response = await fetch(formAction, {
+    const response = await fetch('https://formsubmit.co/ajax/keotradezcoachingprogram@gmail.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        _subject: '🔥 New Coaching Application — ' + data.first_name + ' ' + data.last_name,
+        _replyto: data.email,
+        _captcha: 'false',
+        _template: 'table',
+      }),
     });
 
     if (response.ok) {
