@@ -1518,6 +1518,410 @@
   }
 
   /* =============================================
+     THE FAMILY SECTION
+  ============================================= */
+  #family {
+    padding: 10rem 4rem;
+    background: linear-gradient(180deg, var(--deep-green) 0%, #0c2016 50%, var(--deep-green) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative vine/branch SVG background */
+  #family::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(90,138,90,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 20%, rgba(201,145,61,0.05) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  .family-header {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 7rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Family portrait / name block */
+  .family-name-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: rgba(245,237,224,0.06);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Split layout: timeline left, portrait right */
+  .family-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7rem;
+    max-width: 1260px;
+    margin: 0 auto;
+    align-items: start;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* --- MEMBERS --- */
+  .family-members {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .family-member {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    padding: 2rem 2rem 2rem 0;
+    border-bottom: 1px solid rgba(201,145,61,0.1);
+    transition: border-color 0.3s ease;
+  }
+
+  .family-member:last-child { border-bottom: none; }
+
+  .family-member:hover { border-color: rgba(201,145,61,0.3); }
+
+  .member-initial {
+    flex-shrink: 0;
+    width: 60px; height: 60px;
+    border: 1px solid rgba(201,145,61,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--gold);
+    background: rgba(201,145,61,0.06);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .family-member:hover .member-initial {
+    background: rgba(201,145,61,0.12);
+    border-color: var(--gold);
+  }
+
+  .member-info {}
+
+  .member-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 0.25rem;
+  }
+
+  .member-role {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.9rem;
+  }
+
+  .member-bio {
+    font-size: 0.73rem;
+    font-weight: 300;
+    line-height: 2.1;
+    color: var(--text-muted);
+  }
+
+  /* --- HISTORY TIMELINE (right column) --- */
+  .family-history {
+    position: relative;
+  }
+
+  .history-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 300;
+    color: var(--cream);
+    line-height: 1.15;
+    margin-bottom: 3rem;
+  }
+
+  .history-title em { color: var(--gold-light); font-style: italic; }
+
+  .history-timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .history-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 6px; bottom: 6px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--gold) 0%, rgba(201,145,61,0.1) 100%);
+  }
+
+  .history-event {
+    position: relative;
+    padding: 0 0 2.5rem 2rem;
+  }
+
+  .history-event::before {
+    content: '';
+    position: absolute;
+    left: -4px; top: 8px;
+    width: 9px; height: 9px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(201,145,61,0.2);
+  }
+
+  .event-year {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .event-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+  }
+
+  .event-desc {
+    font-size: 0.72rem;
+    font-weight: 300;
+    line-height: 2;
+    color: var(--text-muted);
+  }
+
+  /* --- SEASONAL CYCLE --- */
+  .family-seasons {
+    max-width: 1260px;
+    margin: 7rem auto 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .seasons-intro {
+    text-align: center;
+    max-width: 660px;
+    margin: 0 auto 4rem;
+  }
+
+  .seasons-intro h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 300;
+    color: var(--cream);
+    margin-bottom: 1rem;
+  }
+
+  .seasons-intro h3 em { color: var(--gold-light); font-style: italic; }
+
+  .seasons-intro p {
+    font-size: 0.75rem;
+    font-weight: 300;
+    line-height: 2.1;
+    color: var(--text-muted);
+  }
+
+  .seasons-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid rgba(201,145,61,0.12);
+  }
+
+  .season-card {
+    padding: 3rem 2rem;
+    border-right: 1px solid rgba(201,145,61,0.12);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s ease;
+  }
+
+  .season-card:last-child { border-right: none; }
+
+  .season-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .season-card:hover { background: rgba(255,255,255,0.02); }
+  .season-card:hover::after { transform: scaleX(1); }
+
+  .season-card.winter::after   { background: linear-gradient(90deg, #8ab4e8, #5c82b0); }
+  .season-card.spring::after   { background: linear-gradient(90deg, #8cbf72, #5a8a5a); }
+  .season-card.summer::after   { background: linear-gradient(90deg, #e8bc6e, #c9913d); }
+  .season-card.autumn::after   { background: linear-gradient(90deg, #c9913d, #8a5a20); }
+
+  .season-icon {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .season-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .season-card.winter .season-name   { color: #8ab4e8; }
+  .season-card.spring .season-name   { color: var(--sage-light); }
+  .season-card.summer .season-name   { color: var(--gold-light); }
+  .season-card.autumn .season-name   { color: var(--gold); }
+
+  .season-months {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--cream);
+    margin-bottom: 1rem;
+  }
+
+  .season-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cream);
+    opacity: 0.5;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .season-desc {
+    font-size: 0.7rem;
+    font-weight: 300;
+    line-height: 1.9;
+    color: var(--text-muted);
+  }
+
+  /* --- VARIETIES --- */
+  .family-varieties {
+    max-width: 1260px;
+    margin: 5rem auto 0;
+    position: relative;
+    z-index: 2;
+    padding: 3.5rem;
+    border: 1px solid rgba(201,145,61,0.12);
+    background: rgba(201,145,61,0.03);
+  }
+
+  .varieties-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+    gap: 2rem;
+  }
+
+  .varieties-header h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 300;
+    color: var(--cream);
+  }
+
+  .varieties-header h3 em { color: var(--gold-light); font-style: italic; }
+
+  .varieties-header p {
+    font-size: 0.7rem;
+    font-weight: 300;
+    line-height: 2;
+    color: var(--text-muted);
+    max-width: 420px;
+    text-align: right;
+  }
+
+  .varieties-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .variety-item {
+    padding: 2rem;
+    border: 1px solid rgba(201,145,61,0.1);
+    background: rgba(255,255,255,0.02);
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+
+  .variety-item:hover {
+    border-color: rgba(201,145,61,0.3);
+    background: rgba(201,145,61,0.06);
+  }
+
+  .variety-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--gold-light);
+    margin-bottom: 0.3rem;
+  }
+
+  .variety-origin {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--sage-light);
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .variety-desc {
+    font-size: 0.7rem;
+    font-weight: 300;
+    line-height: 2;
+    color: var(--text-muted);
+  }
+
+  /* Responsive for family section */
+  @media (max-width: 1024px) {
+    .family-grid { grid-template-columns: 1fr; gap: 4rem; }
+    .seasons-grid { grid-template-columns: repeat(2, 1fr); }
+    .season-card { border-bottom: 1px solid rgba(201,145,61,0.12); }
+    .varieties-list { grid-template-columns: 1fr 1fr; }
+    .varieties-header { flex-direction: column; align-items: flex-start; }
+    .varieties-header p { text-align: left; }
+  }
+
+  @media (max-width: 768px) {
+    .seasons-grid { grid-template-columns: 1fr; }
+    .varieties-list { grid-template-columns: 1fr; }
+  }
+
+  /* =============================================
      PRE-ORDER / WAITLIST
   ============================================= */
   #waitlist {
@@ -1963,6 +2367,7 @@
       <li><a href="#quality">Quality</a></li>
       <li><a href="#nutrition">Nutrition</a></li>
       <li><a href="#origin">Origin</a></li>
+      <li><a href="#family">The Family</a></li>
     </ul>
     <a class="nav-cta" href="#waitlist">Reserve Now</a>
   </nav>
@@ -2422,6 +2827,277 @@
   </section>
 
   <!-- =============================================
+       THE ODERDA FAMILY & THE GROVE
+  ============================================= -->
+  <section id="family">
+    <div class="family-name-display">ODERDA</div>
+
+    <div class="family-header">
+      <div class="section-eyebrow reveal">— The People Behind the Pear —</div>
+      <h2 class="section-title reveal">
+        The <em>Oderda</em> Family<br>& the Art of Cultivation
+      </h2>
+      <p class="section-body reveal">
+        For over sixty years, one Piedmontese family has been quietly rewriting the rules
+        of Italian fruit farming. In Centallo — a town of 6,000 souls in the Po Valley,
+        cradled between the Maritime Alps and the flatlands of Cuneo — the Oderda family
+        has built a living legacy of innovation, patience, and devotion to the land.
+      </p>
+    </div>
+
+    <!-- Family members + history timeline -->
+    <div class="family-grid">
+
+      <!-- LEFT: Family portraits -->
+      <div class="family-members">
+
+        <div class="family-member reveal">
+          <div class="member-initial">G</div>
+          <div class="member-info">
+            <div class="member-name">Giovanni Oderda</div>
+            <div class="member-role">Founder &amp; Visionary</div>
+            <p class="member-bio">
+              Giovanni Oderda is the father of Trybeca in every sense of the word — founder,
+              farmer, and dreamer. A man described by those who know him as perpetually ahead
+              of his time, he coined the very name <em>Trybeca</em> as a fusion of three
+              English verbs — <strong>try</strong>, <strong>be</strong>, <strong>can</strong> —
+              a personal manifesto before the word existed. In the 1960s he was one of the first
+              in the Cuneo province to cultivate nectarines. In 1972 he pioneered kiwi production
+              in Piedmont. In 1986, when the Nashi pear was still an exotic curiosity in Europe,
+              he planted the first orchard — buying the inaugural plants directly from France
+              with a conviction that this extraordinary fruit belonged in Italian soil.
+            </p>
+          </div>
+        </div>
+
+        <div class="family-member reveal">
+          <div class="member-initial">F</div>
+          <div class="member-info">
+            <div class="member-name">Fabrizio Oderda</div>
+            <div class="member-role">Co-Owner &amp; Head of Production</div>
+            <p class="member-bio">
+              Fabrizio grew up with soil under his fingernails and Nashi pear trees as his
+              classroom. Today he oversees the entire production chain of Trybeca's 20 hectares —
+              monitoring the trees through every season, managing the harvest windows, and
+              ensuring that every pear that leaves the orchard is worthy of the Trybeca name.
+              It was Fabrizio who recalled that their journey with Nashi began in 1988 with those
+              first French plants, and it is his hands-on obsession with quality that has made
+              Trybeca the undisputed reference point for Nashi <em>made in Italy</em>.
+            </p>
+          </div>
+        </div>
+
+        <div class="family-member reveal">
+          <div class="member-initial">S</div>
+          <div class="member-info">
+            <div class="member-name">Sabrina Oderda</div>
+            <div class="member-role">Co-Owner &amp; Commercial Direction</div>
+            <p class="member-bio">
+              Sabrina is the voice of Trybeca to the world. Fabrizio's sister brings the same
+              depth of passion to the commercial and communicative side of the business that her
+              brother brings to the fields. Under her direction, Trybeca's Nashi has grown from
+              a regional curiosity into a product recognised at a national level — appearing on
+              Italian television's La7, featured in agricultural and food media, and now evolving
+              into Nashi juice: the next chapter of the Rivoluzione Verde.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: History timeline -->
+      <div class="family-history reveal-right">
+        <h3 class="history-title">
+          Six Decades of<br><em>Green Revolution</em>
+        </h3>
+
+        <div class="history-timeline">
+
+          <div class="history-event">
+            <div class="event-year">1960s</div>
+            <div class="event-title">Pioneers of the Nectarine</div>
+            <p class="event-desc">
+              Giovanni Oderda becomes one of the first farmers in the Cuneo province to cultivate
+              nectarines commercially, establishing Trybeca's identity as a farm that leads,
+              not follows.
+            </p>
+          </div>
+
+          <div class="history-event">
+            <div class="event-year">1972</div>
+            <div class="event-title">The Kiwi Gamble</div>
+            <p class="event-desc">
+              At a time when kiwi was virtually unknown in Piedmont, Giovanni plants his first
+              kiwi vines — over 40 years before the fruit becomes mainstream. Once again, the
+              Oderda farm is ahead of history.
+            </p>
+          </div>
+
+          <div class="history-event">
+            <div class="event-year">1986</div>
+            <div class="event-title">The Nashi Arrives in Italy</div>
+            <p class="event-desc">
+              The first Nashi pear orchards are planted at Centallo, purchased from French
+              nurseries. Most other producers who experiment with the Asian pear eventually give
+              up. The Oderda family does not. They double down.
+            </p>
+          </div>
+
+          <div class="history-event">
+            <div class="event-year">2000s</div>
+            <div class="event-title">Monoculture Mastery</div>
+            <p class="event-desc">
+              Trybeca converts entirely to Nashi as its singular focus. The orchards expand
+              to 20 hectares of owned land, plus an additional 17 hectares of affiliated farms
+              throughout the Centallo area — creating the largest dedicated Nashi operation in Italy.
+            </p>
+          </div>
+
+          <div class="history-event">
+            <div class="event-year">2021</div>
+            <div class="event-title">The Juice is Born</div>
+            <p class="event-desc">
+              Trybeca launches its Nashi juice — <em>il nashi da bere</em> —
+              taking their finest pears and pressing them into the bottle you now hold.
+              100% fruit. No compromise. The Rivoluzione Verde continues.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Seasonal cycle -->
+    <div class="family-seasons">
+      <div class="seasons-intro reveal">
+        <div class="section-eyebrow" style="margin-bottom: 1rem;">The Growing Calendar</div>
+        <h3>Why the <em>Nashi</em> Cannot Be Rushed</h3>
+        <p>
+          The Asian pear is one of the most demanding fruits in cultivation. It requires
+          specific cold temperatures in winter, precise timing in spring, relentless attention
+          in summer, and a harvest window measured in days — not weeks. This is why Nashi
+          cannot be farmed everywhere, and why only certain months produce fruit worthy
+          of the Trybeca standard.
+        </p>
+      </div>
+
+      <div class="seasons-grid reveal">
+
+        <div class="season-card winter">
+          <span class="season-icon">❄️</span>
+          <span class="season-name">Winter</span>
+          <div class="season-months">December — February</div>
+          <span class="season-label">Dormancy &amp; Chilling</span>
+          <p class="season-desc">
+            The Nashi tree requires between <strong>600 and 900 hours</strong> of cold
+            temperatures below 7°C to properly enter dormancy and reset for the following year.
+            The Alpine winters of Centallo — cold, clean, and consistent — provide exactly
+            this. Without sufficient chilling hours, bud break is erratic, flowering is poor,
+            and the harvest fails. Piedmont's winters are not a hardship for the Nashi tree.
+            They are a necessity. The Oderda family monitors temperature logs across the orchards
+            throughout winter, ensuring every tree receives what it needs.
+          </p>
+        </div>
+
+        <div class="season-card spring">
+          <span class="season-icon">🌸</span>
+          <span class="season-name">Spring</span>
+          <div class="season-months">March — May</div>
+          <span class="season-label">Blossom &amp; Thinning</span>
+          <p class="season-desc">
+            In March, the orchards burst into white blossom — thousands of delicate flowers
+            covering the Nashi trees in a display that lasts only days. Cross-pollination
+            is critical: the Oderda family staggers their three varieties — Try, Plumpy,
+            and Deli — to ensure the blooming windows overlap perfectly.
+            Then begins one of the most labour-intensive tasks in fruit farming:
+            <strong>hand-thinning</strong>. Every excess fruit cluster must be removed
+            by hand so that the tree concentrates its energy into fewer, superior pears.
+            No machine can do this with the precision it demands.
+          </p>
+        </div>
+
+        <div class="season-card summer">
+          <span class="season-icon">☀️</span>
+          <span class="season-name">Summer</span>
+          <div class="season-months">June — August</div>
+          <span class="season-label">Development &amp; Care</span>
+          <p class="season-desc">
+            Throughout the long Piedmontese summer, the Nashi pears develop slowly under
+            the Italian sun, their skins transitioning from green to their characteristic
+            golden-bronze. The Oderda team walks the orchards daily — monitoring irrigation
+            from the Stura di Demonte river, adjusting nutrient cycles, and protecting
+            the fruit from the summer storms that roll in from the Alps.
+            The pear's famously crisp texture and high natural sugar content
+            develop during these months of patient, attentive care.
+          </p>
+        </div>
+
+        <div class="season-card autumn">
+          <span class="season-icon">🍐</span>
+          <span class="season-name">Autumn</span>
+          <div class="season-months">August — October</div>
+          <span class="season-label">Harvest</span>
+          <p class="season-desc">
+            Unlike most fruits, the Nashi pear reaches its peak quality only when fully
+            ripened <strong>on the tree</strong>. The harvest window for each variety
+            lasts just days — the difference between a good pear and an exceptional one
+            is measured in hours. Fabrizio personally determines the precise day
+            of harvest for each orchard block. The three Trybeca varieties are staggered
+            across late August through October, extending the season and ensuring
+            that each pear is pressed at its absolute pinnacle.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- The Three Varieties -->
+    <div class="family-varieties reveal">
+      <div class="varieties-header">
+        <h3>The Three <em>Varieties</em></h3>
+        <p>
+          Trybeca cultivates three distinct Nashi varieties — each with its own character,
+          origin, and harvest window — together forming the complex, layered flavour profile
+          of every bottle of Nashi juice.
+        </p>
+      </div>
+      <div class="varieties-list">
+        <div class="variety-item">
+          <div class="variety-name">Try</div>
+          <span class="variety-origin">Japanese Origin</span>
+          <p class="variety-desc">
+            Named with characteristic Trybeca spirit — a direct nod to the family's "try,
+            be, can" philosophy — the Try variety is of Japanese descent, bringing the
+            floral delicacy and refined sweetness that made the Nashi pear legendary
+            in its homeland. Harvests in late August to early September.
+          </p>
+        </div>
+        <div class="variety-item">
+          <div class="variety-name">Plumpy</div>
+          <span class="variety-origin">Korean Origin</span>
+          <p class="variety-desc">
+            Rounded, generous, and intensely juicy, the Plumpy variety brings Korean Nashi
+            at its most expressive. Its fruit is larger than the Try, with a bolder
+            sweetness and a slightly longer window to peak ripeness —
+            typically mid-September to early October.
+          </p>
+        </div>
+        <div class="variety-item">
+          <div class="variety-name">Deli</div>
+          <span class="variety-origin">Korean Origin</span>
+          <p class="variety-desc">
+            The final jewel in the Trybeca crown. The Deli ripens last — deep into October —
+            when the Alpine air grows sharp and cold. Its skin turns the deepest golden-bronze
+            of the three, and its juice is the most concentrated, mineral, and complex.
+            The Deli is what finishes the Nashi season on an unforgettable note.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- =============================================
        WAITLIST / PRE-ORDER
   ============================================= -->
   <section id="waitlist">
@@ -2529,6 +3205,7 @@
             <li><a href="#nutrition">Nutrition</a></li>
             <li><a href="#origin">Origin</a></li>
             <li><a href="#process">Process</a></li>
+            <li><a href="#family">The Family</a></li>
           </ul>
         </div>
 
